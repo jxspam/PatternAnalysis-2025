@@ -20,11 +20,25 @@ from train import train
 from predict import load_model, evaluate_predictions, visualize_prediction
 from dataset import load_keras_slices
 
+# Detect device for automatic mode selection
+USE_CPU = not torch.cuda.is_available()
+
 # Configuration parameters (adjustable for local vs. Rangpur)
-LOCAL_MODE = False  # Set to True for local testing with reduced epochs/data
-EPOCHS = 80 if not LOCAL_MODE else 10
-BATCH_SIZE = 32 if not LOCAL_MODE else 8
-EARLY_STOPPING_PATIENCE = 15 if not LOCAL_MODE else 5
+LOCAL_MODE = True  # Set to True for local testing with reduced epochs/data
+
+# Adjust parameters based on device type
+if USE_CPU:
+    # CPU-specific settings (much slower, require more aggressive reduction)
+    EPOCHS = 10 if not LOCAL_MODE else 3
+    BATCH_SIZE = 8 if not LOCAL_MODE else 2
+    EARLY_STOPPING_PATIENCE = 5 if not LOCAL_MODE else 2
+    NUM_WORKERS = 0  # CPU doesn't benefit from multiple workers
+else:
+    # GPU settings (standard)
+    EPOCHS = 80 if not LOCAL_MODE else 10
+    BATCH_SIZE = 32 if not LOCAL_MODE else 8
+    EARLY_STOPPING_PATIENCE = 15 if not LOCAL_MODE else 5
+    NUM_WORKERS = 4
 
 def check_and_set_data_path():
     """
@@ -144,9 +158,19 @@ def main():
     # Set device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\nDevice: {device}")
+    print(f"CPU Mode: {USE_CPU}")
+    
     if device.type == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"CUDA Version: {torch.version.cuda}")
+    else:
+        print("⚠️  Running on CPU - training will be significantly slower")
+        print(f"   Using aggressive settings: {EPOCHS} epochs, batch_size={BATCH_SIZE}")
+    
+    print(f"\nTraining Configuration:")
+    print(f"  Epochs: {EPOCHS}")
+    print(f"  Batch Size: {BATCH_SIZE}")
+    print(f"  Early Stopping Patience: {EARLY_STOPPING_PATIENCE}")
     
     # Check and set data path
     data_dir = check_and_set_data_path()
