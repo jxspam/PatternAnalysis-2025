@@ -18,6 +18,7 @@ from tqdm import tqdm
 
 from modules import ImprovedUNet2D, dice_coefficient
 from dataset import MedicalImageDataset
+from visualization import plot_test_predictions, plot_dice_distribution, plot_test_grid
 
 
 def load_model(checkpoint_path, num_classes=2, device=None):
@@ -198,7 +199,7 @@ def visualize_prediction(image, prediction, label=None, figsize=(15, 5)):
 
 def main_example(checkpoint_path, data_dir, num_samples=5):
     """
-    Example usage of the prediction script.
+    Example usage of the prediction script with comprehensive visualizations.
     
     Args:
         checkpoint_path: Path to trained model checkpoint
@@ -222,24 +223,36 @@ def main_example(checkpoint_path, data_dir, num_samples=5):
     
     print(f"Found {len(test_images)} test images")
     
-    # Visualize some predictions
+    # Create output directory
     output_dir = Path("./prediction_results")
     output_dir.mkdir(exist_ok=True)
     
-    for i in range(min(num_samples, len(test_images))):
-        print(f"\nProcessing sample {i + 1}/{num_samples}...")
-        
+    # Process all test data and collect results
+    all_images = []
+    all_predictions = []
+    all_labels = []
+    all_dice_scores = []
+    
+    print("\nProcessing all test samples...")
+    for i in tqdm(range(len(test_images))):
         img_path = test_images[i]
         label_path = test_labels[i]
         
         # Make prediction
         prediction, image = predict_single_image(model, img_path, device=device)
         
-        # Load label
+        # Load label and resize if needed
         label_nifti = nib.load(label_path)
         label = label_nifti.get_fdata(caching='unchanged').astype(np.int64)
         if len(label.shape) == 3:
             label = label[:, :, 0]
+        
+        # Resize label to match prediction if needed
+        if label.shape != prediction.shape:
+            from torch.nn.functional import interpolate
+            label_tensor = torch.from_numpy(label).unsqueeze(0).unsqueeze(0).float()
+            label_resized = interpolate(label_tensor, size=prediction.shape, mode='nearest')
+            label = label_resized.squeeze(0).squeeze(0).numpy().astype(np.int64)
         
         # Calculate Dice
         pred_tensor = torch.from_numpy(prediction).long().unsqueeze(0)
@@ -250,22 +263,62 @@ def main_example(checkpoint_path, data_dir, num_samples=5):
         label_tensor = torch.from_numpy(label).long().unsqueeze(0)
         dice_scores = dice_coefficient(pred_probs, label_tensor, num_classes=2)
         
-        print(f"Dice scores: {dice_scores}")
-        
-        # Visualize
-        fig = visualize_prediction(image, prediction, label)
-        fig_path = output_dir / f"prediction_{i:03d}.png"
-        plt.savefig(fig_path, dpi=100, bbox_inches='tight')
-        print(f"Saved visualization to {fig_path}")
-        plt.close(fig)
+        # Store results
+        all_images.append(image)
+        all_predictions.append(prediction)
+        all_labels.append(label)
+        all_dice_scores.append(dice_scores)
     
-    # Evaluate on all test data
-    print("\n" + "="*50)
-    print("Evaluating on all test data...")
-    avg_metrics = evaluate_predictions(model, test_images, test_labels, device=device)
-    print(f"Average test metrics: {avg_metrics}")
+    # Convert to numpy arrays
+    all_images = np.array(all_images)
+    all_predictions = np.array(all_predictions)
+    all_labels = np.array(all_labels)
     
-    return avg_metrics
+    print(f"\nProcessed {len(all_images)} test samples")
+    
+    # Generate visualizations
+    print("\n" + "="*60)
+    print("GENERATING TEST VISUALIZATIONS")
+    print("="*60)
+    
+    # 1. Plot test predictions grid
+    plot_test_grid(all_images, all_predictions, all_labels, all_dice_scores, output_dir)
+    
+    # 2. Plot individual test samples
+    num_to_plot = min(num_samples, len(all_images))
+    plot_test_predictions(all_images, all_predictions, all_labels, all_dice_scores, 
+                         output_dir, sample_indices=list(range(num_to_plot)))
+    
+    # 3. Plot Dice score distribution
+    plot_dice_distribution(all_dice_scores, output_dir)
+    
+    # 4. Print summary statistics
+    print("\n" + "="*60)
+    print("TEST RESULTS SUMMARY")
+    print("="*60)
+    
+    avg_dice_scores = [d['avg'] for d in all_dice_scores]
+    class_0_scores = [d.get('class_0', 0) for d in all_dice_scores]
+    class_1_scores = [d.get('class_1', 0) for d in all_dice_scores]
+    
+    print(f"\nAverage Dice Score: {np.mean(avg_dice_scores):.4f} ± {np.std(avg_dice_scores):.4f}")
+    print(f"  - Min: {np.min(avg_dice_scores):.4f}, Max: {np.max(avg_dice_scores):.4f}")
+    print(f"  - Median: {np.median(avg_dice_scores):.4f}")
+    
+    print(f"\nClass 0 (Background) Dice: {np.mean(class_0_scores):.4f} ± {np.std(class_0_scores):.4f}")
+    print(f"Class 1 (Tissue) Dice: {np.mean(class_1_scores):.4f} ± {np.std(class_1_scores):.4f}")
+    
+    print(f"\nAll visualizations saved to: {output_dir.absolute()}")
+    print("="*60)
+    
+    return {
+        'average_dice': float(np.mean(avg_dice_scores)),
+        'std_dice': float(np.std(avg_dice_scores)),
+        'min_dice': float(np.min(avg_dice_scores)),
+        'max_dice': float(np.max(avg_dice_scores)),
+        'class_0_dice': float(np.mean(class_0_scores)),
+        'class_1_dice': float(np.mean(class_1_scores)),
+    }
 
 
 if __name__ == '__main__':

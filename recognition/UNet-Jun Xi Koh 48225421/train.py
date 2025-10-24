@@ -22,6 +22,7 @@ import json
 
 from modules import ImprovedUNet2D, DiceLoss, dice_coefficient
 from dataset import create_data_loaders
+from visualization import plot_dice_loss_curves, plot_test_predictions, plot_dice_distribution, create_visualization_summary
 
 
 def train_epoch(model, train_loader, optimizer, criterion, device):
@@ -276,8 +277,8 @@ def train(
     history['test_dice'] = test_dice
     print(f"Test Dice Scores: {test_dice}")
     
-    # Plot training history
-    plot_training_history(history, checkpoint_dir)
+    # Plot training history using new visualization module
+    plot_dice_loss_curves(history, checkpoint_dir)
     
     # Save history
     history_path = checkpoint_dir / "training_history.json"
@@ -295,46 +296,6 @@ def train(
     print(f"\nSaved training history to {history_path}")
     
     return history
-
-
-def plot_training_history(history, output_dir):
-    """
-    Plot and save training history.
-    
-    Args:
-        history: Dictionary with training history
-        output_dir: Directory to save plots
-    """
-    
-    output_dir = Path(output_dir)
-    
-    # Plot loss
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
-    
-    # Loss plot
-    ax1.plot(history['train_loss'], label='Train Loss', linewidth=2)
-    ax1.plot(history['val_loss'], label='Val Loss', linewidth=2)
-    ax1.set_xlabel('Epoch')
-    ax1.set_ylabel('Loss')
-    ax1.set_title('Training and Validation Loss')
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-    
-    # Dice plot
-    val_dice_avg = [d['avg'] for d in history['val_dice']]
-    ax2.plot(val_dice_avg, label='Val Dice (Avg)', linewidth=2, color='green')
-    ax2.axhline(y=0.75, color='red', linestyle='--', label='Target Dice (0.75)')
-    ax2.set_xlabel('Epoch')
-    ax2.set_ylabel('Dice Coefficient')
-    ax2.set_title('Validation Dice Coefficient')
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    plot_path = output_dir / 'training_history.png'
-    plt.savefig(plot_path, dpi=150, bbox_inches='tight')
-    print(f"Saved plot to {plot_path}")
-    plt.close()
 
 
 if __name__ == '__main__':

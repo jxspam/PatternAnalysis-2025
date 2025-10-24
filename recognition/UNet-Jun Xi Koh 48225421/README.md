@@ -377,6 +377,137 @@ Solutions:
 4. Train longer (increase epochs)
 5. Try different learning rates
 
+## Visualization and Results
+
+### Automatic Visualization
+
+The training and prediction pipelines now generate comprehensive visualizations automatically:
+
+#### Training Metrics Plot (`dice_loss_curves.png`)
+
+Generated automatically after training completes. Shows 4 subplots:
+
+1. **Training vs Validation Loss**: Tracks convergence
+
+   - Goal: Both decreasing, validation following training closely
+   - Red flag: If validation loss > training loss (possible overfitting)
+
+2. **Validation Dice Score per Epoch**: Overall segmentation quality
+
+   - Goal: Rising curve above 0.75, plateauing after convergence
+   - Typical good range: 0.80-0.95
+
+3. **Per-Class Dice Scores**:
+
+   - Background (Class 0) vs Tissue (Class 1)
+   - Identifies class imbalance issues
+
+4. **Loss Improvement**: Cumulative improvement from epoch 1
+   - Positive values indicate improvement
+
+#### Test Predictions Visualizations
+
+Generated when running `predict.py`. Includes:
+
+1. **Individual Sample Plots** (`test_sample_000.png`, etc.)
+
+   - Left: Input MRI image (grayscale)
+   - Middle: Model prediction with Dice scores
+   - Right: Ground truth segmentation
+   - Shows per-class Dice coefficients
+
+2. **Prediction Grid** (`test_predictions_grid.png`)
+
+   - Quick overview of all test predictions (3×4 grid)
+   - Includes Dice score for each sample
+   - Good for identifying problematic cases
+
+3. **Dice Distribution** (`dice_distribution.png`)
+   - Histograms of Dice scores for each class
+   - Shows mean, median, and distribution
+   - Helps assess consistency of predictions
+
+### Generating Visualizations
+
+**During Training (Automatic):**
+
+```bash
+python train.py --data_dir ./HipMRI_Study_open/keras_slices_data \
+               --epochs 80 \
+               --batch_size 32
+
+# Output: ./checkpoints/dice_loss_curves.png
+```
+
+**Test Predictions (After Training):**
+
+```bash
+python predict.py --checkpoint ./checkpoints/best_model_epoch_X.pt \
+                 --data_dir ./HipMRI_Study_open/keras_slices_data \
+                 --num_samples 10
+
+# Outputs:
+# - ./prediction_results/test_sample_000.png through test_sample_009.png
+# - ./prediction_results/test_predictions_grid.png
+# - ./prediction_results/dice_distribution.png
+```
+
+### Interpreting the Results
+
+**Excellent Training**
+
+- Loss curves smooth and converging
+- Validation Dice > 0.85
+- Plateau around epoch 30-50
+- No oscillations
+
+**Overfitting**
+
+- Training loss << Validation loss
+- Validation Dice rises then decreases
+- Solution: Add dropout, reduce model complexity, get more data
+
+**Underfitting**
+
+- Both losses high and decreasing slowly
+- Dice < 0.60
+- Solution: Train longer, increase complexity, adjust learning rate
+
+**Class Imbalance**
+
+- Class 0 Dice ≠ Class 1 Dice significantly
+- Solution: Use weighted loss or augmentation
+
+### Output File Structure
+
+```
+./checkpoints/
+  ├── dice_loss_curves.png              # Training metrics (4-panel)
+  ├── training_history.json             # Numerical history
+  ├── best_model_epoch_X.pt             # Best model checkpoint
+  └── ...other checkpoints...
+
+./prediction_results/
+  ├── test_sample_000.png               # Individual samples
+  ├── test_sample_001.png
+  ├── test_sample_NNN.png
+  ├── test_predictions_grid.png         # Overview grid
+  ├── dice_distribution.png             # Score histograms
+  └── ...more samples...
+```
+
+### Visualization Dependencies
+
+All visualization dependencies are included in `requirements.txt`:
+
+- matplotlib (plotting)
+- numpy (numerical arrays)
+- json (data serialization)
+
+No additional packages needed!
+
+For detailed usage examples, see `VISUALIZATION_GUIDE.py`.
+
 ## Author
 
 - **Name**: Jun Xi Koh
@@ -390,5 +521,5 @@ This project is licensed under the terms specified in the PatternAnalysis-2025 r
 
 ---
 
-**Last Updated**: 2025-10-23
-**Version**: 1.0
+**Last Updated**: 2025-10-24
+**Version**: 2.0
