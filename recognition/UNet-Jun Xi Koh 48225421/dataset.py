@@ -17,6 +17,7 @@ import nibabel as nib
 from tqdm import tqdm
 import torchvision.transforms as transforms
 from torchvision.transforms import RandomRotation, RandomHorizontalFlip, RandomVerticalFlip
+from torch.nn.functional import interpolate
 
 
 class MedicalImageDataset(Dataset):
@@ -29,14 +30,16 @@ class MedicalImageDataset(Dataset):
         augment: Whether to apply data augmentation (default: False)
         normalize: Whether to normalize images to 0-1 range (default: True)
         standardize: Whether to standardize images (zero mean, unit variance) (default: True)
+        target_size: Target size (H, W) to resize all images to (default: (256, 256))
     """
     
-    def __init__(self, image_paths, label_paths, augment=False, normalize=True, standardize=False):
+    def __init__(self, image_paths, label_paths, augment=False, normalize=True, standardize=False, target_size=(256, 256)):
         self.image_paths = image_paths
         self.label_paths = label_paths
         self.augment = augment
         self.normalize = normalize
         self.standardize = standardize
+        self.target_size = target_size
         self.images = []
         self.labels = []
         
@@ -70,6 +73,19 @@ class MedicalImageDataset(Dataset):
             # Handle 3D labels by taking first slice if needed
             if len(label.shape) == 3:
                 label = label[:, :, 0]
+            
+            # Resize to target size to ensure all images have the same dimensions
+            if img.shape != self.target_size:
+                # Convert to tensor, resize, and convert back
+                img_tensor = torch.from_numpy(img).unsqueeze(0).unsqueeze(0).float()  # (1, 1, H, W)
+                img_resized = interpolate(img_tensor, size=self.target_size, mode='bilinear', align_corners=False)
+                img = img_resized.squeeze(0).squeeze(0).numpy()
+            
+            if label.shape != self.target_size:
+                # Use nearest neighbor for labels to preserve class values
+                label_tensor = torch.from_numpy(label).unsqueeze(0).unsqueeze(0).float()  # (1, 1, H, W)
+                label_resized = interpolate(label_tensor, size=self.target_size, mode='nearest')
+                label = label_resized.squeeze(0).squeeze(0).numpy().astype(np.int64)
             
             # Preprocess image
             if self.normalize:
