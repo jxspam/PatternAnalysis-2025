@@ -1,0 +1,374 @@
+# Git Ignore for PatternAnalysis-2025 Repository
+# Excludes datasets, model files, and temporary files
+# Keeps only code, scripts, and documentation
+
+# ============================================================================
+# DATASETS - DO NOT COMMIT
+# ============================================================================
+
+# HipMRI Study datasets
+HipMRI_Study_open/
+*/HipMRI_Study_open/
+**/HipMRI_Study_open/
+
+# Keras slices data
+keras_slices_data/
+*/keras_slices_data/
+**/keras_slices_data/
+
+# Other medical imaging datasets
+*.nii
+*.nii.gz
+*.nifti
+*.dcm
+*.dicom
+*.mhd
+*.mha
+*.raw
+
+# Generic data directories
+data/
+datasets/
+*/data/
+**/data/
+*/datasets/
+**/datasets/
+
+# ============================================================================
+# MODEL FILES - DO NOT COMMIT
+# ============================================================================
+
+# PyTorch model checkpoints
+*.pt
+*.pth
+checkpoints/
+*/checkpoints/
+**/checkpoints/
+models/
+*/models/
+**/models/
+
+# TensorFlow models
+*.h5
+*.hdf5
+*.pb
+saved_models/
+*/saved_models/
+**/saved_models/
+
+# Other model formats
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+*.bin
+
+# ============================================================================
+# TRAINING OUTPUTS - DO NOT COMMIT
+# ============================================================================
+
+# Training logs and history
+*.log
+logs/
+*/logs/
+**/logs/
+training_logs/
+*/training_logs/
+**/training_logs/
+
+# Training history and metrics
+training_history.json
+*/training_history.json
+**/training_history.json
+training_history.csv
+*/training_history.csv
+**/training_history.csv
+
+# ============================================================================
+# RESULTS AND OUTPUTS - DO NOT COMMIT
+# ============================================================================
+
+# Prediction results
+prediction_results/
+*/prediction_results/
+**/prediction_results/
+results/
+*/results/
+**/results/
+
+# Generated plots and visualizations (keep code, not generated images)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.tiff
+output_figures/
+*/output_figures/
+**/output_figures/
+
+# ============================================================================
+# PYTHON ARTIFACTS
+# ============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ============================================================================
+# IDE AND EDITOR FILES
+# ============================================================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================================================
+# OPERATING SYSTEM FILES
+# ============================================================================
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# macOS (additional)
+.Icon
+*.icns
+*.DS_Store
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.~*
+
+# OS X
+.Thumbs.db
+.DS_Store
+
+# ============================================================================
+# PROJECT SPECIFIC - MEDICAL IMAGING / ML
+# ============================================================================
+
+# Temporary data processing files
+*.temp
+*.backup
+*.cache
+
+# Conda environment specs (but keep requirements.txt)
+environment.yml.lock
+
+# GPU memory traces
+*.ncu-rep
+*.nvvp
+
+# Tensorboard logs
+runs/
+*/runs/
+**/runs/
+
+# Weights and Biases
+wandb/
+*/wandb/
+**/wandb/
+
+# ============================================================================
+# ALLOW EXCEPTIONS (DO COMMIT)
+# ============================================================================
+
+# These are important for reproducibility and should be committed:
+
+# Python requirements (KEEP - needed for installation)
+!requirements.txt
+!environment.yml
+!setup.py
+!setup.cfg
+
+# Documentation (KEEP - needed for README)
+!README.md
+!*.md
+!docs/
+
+# Source code (KEEP - this is the main deliverable)
+!*.py
+!*.sh
+
+# Configuration files (KEEP - needed for reproducibility)
+!*.json
+!*.yaml
+!*.yml
+!*.toml
+!*.cfg
+!*.ini
+
+# License and project files (KEEP)
+!LICENSE
+!.gitignore
+!.gitattributes
+
+# Sample/example files (KEEP - can be small)
+# Uncomment if you have important example files:
+# !examples/
+# !data/sample/
