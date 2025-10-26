@@ -21,7 +21,7 @@ from dataset import load_semantic_data
 from visualization import generate_all_3d_visualizations
 
 # Fixed configuration parameters for 3D (memory-efficient)
-EPOCHS = 1
+EPOCHS = 50
 BATCH_SIZE = 1
 EARLY_STOPPING_PATIENCE = 2
 NUM_WORKERS = 0
