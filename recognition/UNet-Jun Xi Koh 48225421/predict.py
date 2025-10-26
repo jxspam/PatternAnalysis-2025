@@ -1,11 +1,15 @@
 """
-Inference script for Improved UNet segmentation.
+Unified inference script for 2D and 3D Improved UNet segmentation.
 
 This script demonstrates:
-- Loading a trained model
-- Making predictions on single images
+- Loading a trained model (2D or 3D)
+- Making predictions on single images/volumes
 - Visualizing results
 - Computing Dice scores
+
+Usage:
+    2D: python predict.py --mode 2d --checkpoint ./checkpoints/best_model_epoch_1.pt --image_path path/to/image.nii.gz
+    3D: python predict.py --mode 3d --checkpoint ./checkpoints_3d/best_model_epoch_1.pt --volume_path path/to/volume.nii.gz
 """
 
 import os
@@ -14,19 +18,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import nibabel as nib
-from tqdm import tqdm
+from scipy.ndimage import zoom
 
-from modules import ImprovedUNet2D, dice_coefficient
-from dataset import MedicalImageDataset
-from visualization import plot_test_predictions, plot_dice_distribution, plot_test_grid
+from modules import ImprovedUNet2D, ImprovedUNet3D, dice_coefficient, dice_coefficient_3d
 
 
-def load_model(checkpoint_path, num_classes=2, device=None):
+def load_model(checkpoint_path, mode='2d', num_classes=2, device=None):
     """
     Load a trained model from checkpoint.
     
     Args:
-        checkpoint_path: Path to checkpoint file
+        checkpoint_path: Path to checkpoint file (.pt file, not full checkpoint)
+        mode: '2d' or '3d'
         num_classes: Number of classes (default: 2)
         device: Device to load model on (default: cuda if available, else cpu)
         
@@ -38,297 +41,283 @@ def load_model(checkpoint_path, num_classes=2, device=None):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Create model
-    model = ImprovedUNet2D(in_channels=1, num_classes=num_classes, filters=64, dropout_rate=0.5)
+    if mode.lower() == '3d':
+        model = ImprovedUNet3D(in_channels=1, num_classes=num_classes, filters=32, dropout_rate=0.5)
+    else:
+        model = ImprovedUNet2D(in_channels=1, num_classes=num_classes, filters=64, dropout_rate=0.5)
     
     # Load checkpoint
-    checkpoint = torch.load(checkpoint_path, map_location=device)
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model = model.to(device)
     model.eval()
     
-    print(f"Loaded model from {checkpoint_path}")
+    print(f"Loaded {mode.upper()} model from {checkpoint_path}")
     return model
 
 
-def predict_single_image(model, image_path, device=None, normalize=True):
+def predict_single_image(model, image_path, device=None):
     """
-    Make prediction on a single image.
+    Predict segmentation for a single 2D image.
     
     Args:
         model: Trained model
-        image_path: Path to image file (Nifti format)
-        device: Device to run inference on
-        normalize: Whether to normalize image (default: True)
+        image_path: Path to NIfTI image file
+        device: Device to use (default: cuda if available, else cpu)
         
     Returns:
-        Tuple of (prediction, image)
+        Tuple of (prediction, normalized_image)
+            prediction: Predicted class indices (H, W)
+            normalized_image: Normalized input image (H, W)
     """
     
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Load image
-    img_nifti = nib.load(image_path)
-    img = img_nifti.get_fdata(caching='unchanged').astype(np.float32)
+    img_nifti = nib.load(str(image_path))
+    image = img_nifti.get_fdata().astype(np.float32)
     
-    # Handle 3D images
-    if len(img.shape) == 3:
-        img = img[:, :, 0]
+    # Handle 3D by taking first slice
+    if len(image.shape) == 3:
+        image = image[:, :, 0]
     
     # Normalize
-    if normalize:
-        img_min = img.min()
-        img_max = img.max()
-        if img_max > img_min:
-            img = (img - img_min) / (img_max - img_min)
-        else:
-            img = np.zeros_like(img)
+    img_min = image.min()
+    img_max = image.max()
+    if img_max > img_min:
+        image = (image - img_min) / (img_max - img_min)
     
-    # Add batch and channel dimensions
-    img_tensor = torch.from_numpy(img).float()
-    img_tensor = img_tensor.unsqueeze(0).unsqueeze(0)  # (1, 1, H, W)
-    img_tensor = img_tensor.to(device)
+    # Convert to tensor and add batch/channel dims
+    image_tensor = torch.from_numpy(image).float().unsqueeze(0).unsqueeze(0).to(device)  # (1, 1, H, W)
     
-    # Make prediction
+    # Predict
     with torch.no_grad():
-        prediction = model(img_tensor)
+        output = model(image_tensor)
+        prediction = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()  # (H, W)
     
-    # Convert to class indices
-    prediction = torch.argmax(prediction, dim=1).cpu().numpy()
-    
-    return prediction[0], img
+    return prediction, image
 
 
-def evaluate_predictions(model, image_paths, label_paths, device=None):
+def predict_single_volume(model, volume_path, downsample_factor=2, device=None):
     """
-    Evaluate model predictions on multiple images.
+    Predict segmentation for a single 3D volume.
     
     Args:
         model: Trained model
-        image_paths: List of image paths
-        label_paths: List of label paths
-        device: Device to run inference on
+        volume_path: Path to NIfTI volume file
+        downsample_factor: Downsampling factor used during training (default: 2)
+        device: Device to use (default: cuda if available, else cpu)
         
     Returns:
-        Dictionary with evaluation metrics
+        Tuple of (prediction, downsampled_volume, original_volume)
+            prediction: Predicted class indices (D, H, W) at downsampled resolution
+            downsampled_volume: Input volume at downsampled resolution
+            original_volume: Original volume at native resolution
     """
     
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    all_dice_scores = []
+    # Load volume
+    vol_nifti = nib.load(str(volume_path))
+    volume = vol_nifti.get_fdata().astype(np.float32)
     
-    print("Evaluating predictions...")
-    for img_path, label_path in tqdm(zip(image_paths, label_paths)):
-        # Make prediction
-        prediction, img = predict_single_image(model, img_path, device=device)
-        
-        # Load label
-        label_nifti = nib.load(label_path)
-        label = label_nifti.get_fdata(caching='unchanged').astype(np.int64)
-        if len(label.shape) == 3:
-            label = label[:, :, 0]
-        
-        # Calculate Dice
-        pred_tensor = torch.from_numpy(prediction).long().unsqueeze(0).unsqueeze(0)
-        label_tensor = torch.from_numpy(label).long().unsqueeze(0)
-        
-        # Expand dimensions to match expected shape
-        pred_tensor = pred_tensor.squeeze(1)  # (1, H, W)
-        pred_probs = torch.zeros((1, 2, pred_tensor.shape[1], pred_tensor.shape[2]))
-        for c in range(2):
-            pred_probs[:, c] = (pred_tensor == c).float()
-        
-        dice_scores = dice_coefficient(pred_probs, label_tensor, num_classes=2)
-        all_dice_scores.append(dice_scores)
+    # Downsample
+    if downsample_factor > 1:
+        zoom_factor = 1.0 / downsample_factor
+        volume_downsampled = zoom(volume, zoom_factor, order=1)
+    else:
+        volume_downsampled = volume.copy()
     
-    # Calculate average metrics
-    avg_dice = {
-        'class_0': np.mean([d['class_0'] for d in all_dice_scores]),
-        'class_1': np.mean([d['class_1'] for d in all_dice_scores]),
-        'avg': np.mean([d['avg'] for d in all_dice_scores])
-    }
+    # Normalize
+    vol_min = volume_downsampled.min()
+    vol_max = volume_downsampled.max()
+    if vol_max > vol_min:
+        volume_downsampled = (volume_downsampled - vol_min) / (vol_max - vol_min)
     
-    return avg_dice
+    # Convert to tensor and add batch/channel dims
+    volume_tensor = torch.from_numpy(volume_downsampled).float().unsqueeze(0).unsqueeze(0).to(device)  # (1, 1, D, H, W)
+    
+    # Predict
+    with torch.no_grad():
+        output = model(volume_tensor)
+        prediction = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()  # (D, H, W)
+    
+    return prediction, volume_downsampled, volume
 
 
-def visualize_prediction(image, prediction, label=None, figsize=(15, 5)):
+def evaluate_predictions(predictions, ground_truth, num_classes=2):
     """
-    Visualize image, prediction, and optionally ground truth label.
+    Evaluate predictions against ground truth.
+    
+    Args:
+        predictions: Predicted class indices (array)
+        ground_truth: Ground truth labels (array)
+        num_classes: Number of classes
+        
+    Returns:
+        Dictionary with Dice scores for each class and average
+    """
+    
+    pred_tensor = torch.from_numpy(predictions).long()
+    gt_tensor = torch.from_numpy(ground_truth).long()
+    
+    # For 2D, add batch dimension
+    if pred_tensor.dim() == 2:
+        pred_tensor = pred_tensor.unsqueeze(0)
+        gt_tensor = gt_tensor.unsqueeze(0)
+    
+    # Choose correct dice function based on dimensionality
+    if pred_tensor.dim() == 3:  # 2D: (B, H, W)
+        # Add class dimension for dice_coefficient
+        pred_one_hot = torch.zeros(pred_tensor.shape[0], num_classes, *pred_tensor.shape[1:])
+        for c in range(num_classes):
+            pred_one_hot[:, c] = (pred_tensor == c)
+        return dice_coefficient(pred_one_hot, gt_tensor, num_classes=num_classes)
+    else:  # 3D: (B, D, H, W) or (D, H, W)
+        if pred_tensor.dim() == 4:
+            pred_tensor = pred_tensor.squeeze(0)
+            gt_tensor = gt_tensor.squeeze(0)
+        return dice_coefficient_3d(
+            torch.nn.functional.one_hot(pred_tensor, num_classes=num_classes).permute(3, 0, 1, 2).unsqueeze(0),
+            gt_tensor.unsqueeze(0),
+            num_classes=num_classes
+        )
+
+
+def visualize_2d_prediction(image, prediction, ground_truth=None, save_path=None):
+    """
+    Visualize 2D prediction results.
     
     Args:
         image: Input image (H, W)
-        prediction: Model prediction (H, W)
-        label: Ground truth label (H, W) (optional)
-        figsize: Figure size (default: (15, 5))
+        prediction: Predicted segmentation (H, W)
+        ground_truth: Ground truth segmentation (H, W), optional
+        save_path: Path to save visualization, optional
     """
     
-    if label is not None:
-        fig, axes = plt.subplots(1, 3, figsize=figsize)
-        
-        # Image
-        axes[0].imshow(image, cmap='gray')
-        axes[0].set_title('Input Image')
-        axes[0].axis('off')
-        
-        # Prediction
-        axes[1].imshow(prediction, cmap='viridis')
-        axes[1].set_title('Prediction')
-        axes[1].axis('off')
-        
-        # Ground truth
-        axes[2].imshow(label, cmap='viridis')
-        axes[2].set_title('Ground Truth Label')
+    num_plots = 3 if ground_truth is not None else 2
+    fig, axes = plt.subplots(1, num_plots, figsize=(15, 5))
+    if num_plots == 2:
+        axes = [axes[0], axes[1]]
+    
+    # Input image
+    axes[0].imshow(image, cmap='gray')
+    axes[0].set_title('Input Image')
+    axes[0].axis('off')
+    
+    # Prediction
+    axes[1].imshow(prediction, cmap='jet')
+    axes[1].set_title('Prediction')
+    axes[1].axis('off')
+    
+    # Ground truth
+    if ground_truth is not None:
+        axes[2].imshow(ground_truth, cmap='jet')
+        axes[2].set_title('Ground Truth')
         axes[2].axis('off')
-    else:
-        fig, axes = plt.subplots(1, 2, figsize=figsize)
-        
-        # Image
-        axes[0].imshow(image, cmap='gray')
-        axes[0].set_title('Input Image')
-        axes[0].axis('off')
-        
-        # Prediction
-        axes[1].imshow(prediction, cmap='viridis')
-        axes[1].set_title('Prediction')
-        axes[1].axis('off')
     
     plt.tight_layout()
-    return fig
+    
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"Saved visualization to {save_path}")
+    plt.show()
 
 
-def main_example(checkpoint_path, data_dir, num_samples=5):
+def visualize_3d_prediction_slices(volume, prediction, ground_truth=None, num_slices=5, save_path=None):
     """
-    Example usage of the prediction script with comprehensive visualizations.
+    Visualize 3D prediction results by showing middle slices.
     
     Args:
-        checkpoint_path: Path to trained model checkpoint
-        data_dir: Path to test data directory
-        num_samples: Number of samples to visualize (default: 5)
+        volume: Input 3D volume (D, H, W)
+        prediction: Predicted 3D segmentation (D, H, W)
+        ground_truth: Ground truth 3D segmentation (D, H, W), optional
+        num_slices: Number of slices to show (default: 5)
+        save_path: Path to save visualization, optional
     """
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    # Get middle slices
+    depth = volume.shape[0]
+    slice_indices = np.linspace(0, depth-1, num_slices, dtype=int)
     
-    # Load model
-    model = load_model(checkpoint_path, device=device)
+    num_plots = 3 if ground_truth is not None else 2
+    fig, axes = plt.subplots(num_slices, num_plots, figsize=(12, 4*num_slices))
     
-    # Load test data paths
-    test_dir = Path(data_dir)
-    test_img_dir = test_dir / "keras_slices_test"
-    test_label_dir = test_dir / "keras_slices_seg_test"
-    
-    test_images = sorted([str(f) for f in test_img_dir.glob("*.nii*")])
-    test_labels = sorted([str(f) for f in test_label_dir.glob("*.nii*")])
-    
-    print(f"Found {len(test_images)} test images")
-    
-    # Create output directory
-    output_dir = Path("./prediction_results")
-    output_dir.mkdir(exist_ok=True)
-    
-    # Process all test data and collect results
-    all_images = []
-    all_predictions = []
-    all_labels = []
-    all_dice_scores = []
-    
-    print("\nProcessing all test samples...")
-    for i in tqdm(range(len(test_images))):
-        img_path = test_images[i]
-        label_path = test_labels[i]
+    for row, slice_idx in enumerate(slice_indices):
+        # Input slice
+        axes[row, 0].imshow(volume[slice_idx], cmap='gray')
+        axes[row, 0].set_title(f'Input Slice {slice_idx}')
+        axes[row, 0].axis('off')
         
-        # Make prediction
-        prediction, image = predict_single_image(model, img_path, device=device)
+        # Prediction slice
+        axes[row, 1].imshow(prediction[slice_idx], cmap='jet')
+        axes[row, 1].set_title(f'Prediction Slice {slice_idx}')
+        axes[row, 1].axis('off')
         
-        # Load label and resize if needed
-        label_nifti = nib.load(label_path)
-        label = label_nifti.get_fdata(caching='unchanged').astype(np.int64)
-        if len(label.shape) == 3:
-            label = label[:, :, 0]
-        
-        # Resize label to match prediction if needed
-        if label.shape != prediction.shape:
-            from torch.nn.functional import interpolate
-            label_tensor = torch.from_numpy(label).unsqueeze(0).unsqueeze(0).float()
-            label_resized = interpolate(label_tensor, size=prediction.shape, mode='nearest')
-            label = label_resized.squeeze(0).squeeze(0).numpy().astype(np.int64)
-        
-        # Calculate Dice
-        pred_tensor = torch.from_numpy(prediction).long().unsqueeze(0)
-        pred_probs = torch.zeros((1, 2, pred_tensor.shape[1], pred_tensor.shape[2]))
-        for c in range(2):
-            pred_probs[:, c] = (pred_tensor == c).float()
-        
-        label_tensor = torch.from_numpy(label).long().unsqueeze(0)
-        dice_scores = dice_coefficient(pred_probs, label_tensor, num_classes=2)
-        
-        # Store results
-        all_images.append(image)
-        all_predictions.append(prediction)
-        all_labels.append(label)
-        all_dice_scores.append(dice_scores)
+        # Ground truth slice
+        if ground_truth is not None:
+            axes[row, 2].imshow(ground_truth[slice_idx], cmap='jet')
+            axes[row, 2].set_title(f'GT Slice {slice_idx}')
+            axes[row, 2].axis('off')
     
-    # Convert to numpy arrays
-    all_images = np.array(all_images)
-    all_predictions = np.array(all_predictions)
-    all_labels = np.array(all_labels)
+    plt.tight_layout()
     
-    print(f"\nProcessed {len(all_images)} test samples")
-    
-    # Generate visualizations
-    print("\n" + "="*60)
-    print("GENERATING TEST VISUALIZATIONS")
-    print("="*60)
-    
-    # 1. Plot test predictions grid
-    plot_test_grid(all_images, all_predictions, all_labels, all_dice_scores, output_dir)
-    
-    # 2. Plot individual test samples
-    num_to_plot = min(num_samples, len(all_images))
-    plot_test_predictions(all_images, all_predictions, all_labels, all_dice_scores, 
-                         output_dir, sample_indices=list(range(num_to_plot)))
-    
-    # 3. Plot Dice score distribution
-    plot_dice_distribution(all_dice_scores, output_dir)
-    
-    # 4. Print summary statistics
-    print("\n" + "="*60)
-    print("TEST RESULTS SUMMARY")
-    print("="*60)
-    
-    avg_dice_scores = [d['avg'] for d in all_dice_scores]
-    class_0_scores = [d.get('class_0', 0) for d in all_dice_scores]
-    class_1_scores = [d.get('class_1', 0) for d in all_dice_scores]
-    
-    print(f"\nAverage Dice Score: {np.mean(avg_dice_scores):.4f} ± {np.std(avg_dice_scores):.4f}")
-    print(f"  - Min: {np.min(avg_dice_scores):.4f}, Max: {np.max(avg_dice_scores):.4f}")
-    print(f"  - Median: {np.median(avg_dice_scores):.4f}")
-    
-    print(f"\nClass 0 (Background) Dice: {np.mean(class_0_scores):.4f} ± {np.std(class_0_scores):.4f}")
-    print(f"Class 1 (Tissue) Dice: {np.mean(class_1_scores):.4f} ± {np.std(class_1_scores):.4f}")
-    
-    print(f"\nAll visualizations saved to: {output_dir.absolute()}")
-    print("="*60)
-    
-    return {
-        'average_dice': float(np.mean(avg_dice_scores)),
-        'std_dice': float(np.std(avg_dice_scores)),
-        'min_dice': float(np.min(avg_dice_scores)),
-        'max_dice': float(np.max(avg_dice_scores)),
-        'class_0_dice': float(np.mean(class_0_scores)),
-        'class_1_dice': float(np.mean(class_1_scores)),
-    }
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"Saved visualization to {save_path}")
+    plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description='Inference with Improved UNet')
-    parser.add_argument('--checkpoint', type=str, required=True, help='Path to checkpoint')
-    parser.add_argument('--data_dir', type=str, required=True, help='Path to data directory')
-    parser.add_argument('--num_samples', type=int, default=5, help='Number of samples to visualize')
+    parser = argparse.ArgumentParser(description='Predict with Improved UNet model')
+    parser.add_argument('--mode', type=str, default='2d', choices=['2d', '3d'],
+                        help='Prediction mode: 2d or 3d')
+    parser.add_argument('--checkpoint', type=str, required=True,
+                        help='Path to model checkpoint')
+    parser.add_argument('--image_path', type=str,
+                        help='Path to 2D image (for 2d mode)')
+    parser.add_argument('--volume_path', type=str,
+                        help='Path to 3D volume (for 3d mode)')
+    parser.add_argument('--downsample_factor', type=int, default=2,
+                        help='Downsampling factor for 3D')
+    parser.add_argument('--device', type=str, default='auto',
+                        help='Device to use (auto, cuda, cpu)')
     
     args = parser.parse_args()
     
-    metrics = main_example(args.checkpoint, args.data_dir, num_samples=args.num_samples)
+    # Determine device
+    if args.device == 'auto':
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    else:
+        device = torch.device(args.device)
+    
+    # Load model
+    model = load_model(args.checkpoint, mode=args.mode, device=device)
+    
+    if args.mode == '2d':
+        if not args.image_path:
+            raise ValueError("--image_path required for 2d mode")
+        
+        # Predict
+        pred, img = predict_single_image(model, args.image_path, device=device)
+        
+        # Visualize
+        visualize_2d_prediction(img, pred, save_path="prediction_2d.png")
+        
+    else:  # 3d mode
+        if not args.volume_path:
+            raise ValueError("--volume_path required for 3d mode")
+        
+        # Predict
+        pred, vol_ds, vol = predict_single_volume(model, args.volume_path, 
+                                                  downsample_factor=args.downsample_factor,
+                                                  device=device)
+        
+        # Visualize
+        visualize_3d_prediction_slices(vol_ds, pred, num_slices=5, save_path="prediction_3d.png")
+        
+        print(f"Prediction shape: {pred.shape}")
+        print(f"Classes: {np.unique(pred)}")

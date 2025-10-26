@@ -16,9 +16,9 @@ import sys
 import torch
 import nibabel as nib
 
-from train3d import train
-from predict3d import load_model_3d, evaluate_3d_predictions, visualize_3d_stats
-from dataset3d import load_semantic_data
+from train import train
+from dataset import load_semantic_data
+from visualization import generate_all_3d_visualizations
 
 # Fixed configuration parameters for 3D (memory-efficient)
 EPOCHS = 1
@@ -173,6 +173,7 @@ def main():
     
     history = train(
         data_dir=str(data_dir),
+        mode='3d',
         num_epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         learning_rate=1e-3,
@@ -219,6 +220,23 @@ def main():
     print("="*60)
     print(f"Checkpoints saved to: {checkpoint_dir}")
     print(f"Training history saved to: {checkpoint_dir / 'training_history_3d.json'}")
+    
+    # Generate visualizations
+    print("\n" + "="*60)
+    print("GENERATING VISUALIZATIONS")
+    print("="*60)
+    try:
+        generate_all_3d_visualizations(
+            checkpoint_dir=str(checkpoint_dir),
+            data_dir=str(data_dir),
+            device=device,
+            num_detailed_samples=10,
+            downsample_factor=DOWNSAMPLE_FACTOR
+        )
+        print("\n✓ Visualizations generated successfully!")
+    except Exception as e:
+        print(f"\n✗ Error generating visualizations: {e}")
+        print("  (This is non-fatal, but visualizations will not be available)")
 
 
 if __name__ == '__main__':

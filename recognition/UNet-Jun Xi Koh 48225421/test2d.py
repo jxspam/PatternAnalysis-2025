@@ -172,6 +172,7 @@ def main():
     
     history = train(
         data_dir=str(data_dir),
+        mode='2d',
         num_epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         learning_rate=1e-3,

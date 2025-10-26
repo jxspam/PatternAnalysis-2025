@@ -18,7 +18,10 @@ Both models achieve excellent segmentation performance on the HipMRI Study datas
 - **Skip connections**: Concatenate encoder outputs with decoder upsampled features for better feature preservation
 - **Batch normalization**: Stabilizes training and enables higher learning rates
 - **Dropout regularization (0.5)**: Prevents overfitting by randomly disabling 50% of activations
-- **Dice Loss**: Directly optimizes segmentation metric, handles class imbalance better than cross-entropy
+- **Weighted Dice Loss**: Directly optimizes segmentation metric with **class weighting** to handle severe class imbalance
+- **Class Imbalance Handling** (3D): Background voxels ~7x more frequent than prostate voxels
+  - Solution: Apply inverse frequency weights [0.25, 1.75] to penalize mistakes on minority class
+  - Result: Prostate Dice improved from 24% → 93%
 
 **2D Architecture**:
 
@@ -127,18 +130,44 @@ prediction, downsampled_vol, original_vol = predict_single_volume(
 
 ## Implementation Files
 
-| File            | Purpose                                                                                  |
-| --------------- | ---------------------------------------------------------------------------------------- |
-| `modules.py`    | 2D/3D components: ConvBlock2D/3D, UpConvBlock2D/3D, ImprovedUNet2D/3D, shared DiceLoss   |
-| `dataset.py`    | 2D data: MedicalImageDataset, load_keras_slices(), create_data_loaders()                 |
-| `dataset3d.py`  | 3D data: VolumetricDataset, load_semantic_data(), create_3d_data_loaders(), downsampling |
-| `train.py`      | 2D training: train_epoch(), validate_epoch(), test_epoch(), train()                      |
-| `train3d.py`    | 3D training: train_epoch(), validate_epoch(), test_epoch(), train() for volumetric data  |
-| `predict.py`    | 2D inference: load_model(), predict_single_image(), evaluate_predictions()               |
-| `predict3d.py`  | 3D inference: load_model_3d(), predict_single_volume(), visualize_3d_prediction()        |
-| `load_nifti.py` | Example: Loading NIfTI files using nibabel and nilearn                                   |
-| `test2d.py`     | Automated test suite for 2D Rangpur/local execution                                      |
-| `test3d.py`     | Automated test suite for 3D Rangpur/local execution                                      |
+**Unified Architecture** (consolidated 2D and 3D implementations):
+
+| File            | Purpose                                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------------------- |
+| `modules.py`    | 2D/3D components: ConvBlock2D/3D, UpConvBlock2D/3D, ImprovedUNet2D/3D, shared DiceLoss with class weighting |
+| `dataset.py`    | **Unified** 2D and 3D data loading via `mode='2d'/'3d'` parameter:                                          |
+|                 | - 2D: MedicalImageDataset, load_keras_slices(), for 2D slices                                               |
+|                 | - 3D: VolumetricDataset, load_semantic_data(), with automatic downsampling (2x)                             |
+|                 | - Unified: create_data_loaders(mode='2d'/'3d') wrapper function                                             |
+| `train.py`      | **Unified** training script supporting both 2D and 3D via `mode='2d'/'3d'` parameter:                       |
+|                 | - train(mode='2d'/'3d', ...): Automatically selects model, loss, and data loader                            |
+|                 | - Supports argparse: `--mode 2d/3d --epochs 50 --downsample_factor 2`                                       |
+|                 | - Class weights [0.25, 1.75] applied only for 3D to handle imbalance                                        |
+| `predict.py`    | **Unified** inference script supporting both 2D and 3D via `mode='2d'/'3d'` parameter:                      |
+|                 | - load_model(checkpoint_path, mode='2d'/'3d'): Load appropriate model                                       |
+|                 | - predict_single_image(): 2D inference                                                                      |
+|                 | - predict_single_volume(): 3D inference with downsampling                                                   |
+|                 | - evaluate_predictions(): Compute Dice scores (auto-selects 2D or 3D function)                              |
+| `load_nifti.py` | Example: Loading NIfTI files using nibabel and nilearn                                                      |
+| `test.py`       | Automated test suite for 2D Rangpur/local execution (mode='2d')                                             |
+| `test2d.py`     | Alternative test suite for 2D execution                                                                     |
+| `test3d.py`     | Automated test suite for 3D Rangpur/local execution (mode='3d')                                             |
+
+**Usage Examples**:
+
+```bash
+# 2D Training
+python train.py --mode 2d --data_dir ./HipMRI_Study_open/keras_slices_data --epochs 50
+
+# 3D Training
+python train.py --mode 3d --data_dir ./HipMRI_Study_open --epochs 50 --downsample_factor 2
+
+# 2D Prediction
+python predict.py --mode 2d --checkpoint ./checkpoints/best_model.pt --image_path input.nii.gz
+
+# 3D Prediction
+python predict.py --mode 3d --checkpoint ./checkpoints_3d/best_model.pt --volume_path volume.nii.gz
+```
 
 ## Results
 
@@ -158,24 +187,37 @@ prediction, downsampled_vol, original_vol = predict_single_volume(
 
 ### 3D UNet Results
 
-**Training Configuration**: Epochs=1, Batch Size=1, Learning Rate=1e-3, Downsample Factor=2x, Adam Optimizer
+**Training Configuration**: Epochs=50, Batch Size=1, Learning Rate=1e-3, Downsample Factor=2x, Early Stopping Patience=10, Adam Optimizer
 
-| Metric                 | Expected Value |
-| ---------------------- | -------------- |
-| Test Dice (Background) | ≥ 0.7          |
-| Test Dice (Prostate)   | ≥ 0.7          |
-| Test Dice (Average)    | ≥ 0.7          |
+**Class Weights for Loss**: [0.25, 1.75] - Applied to handle class imbalance (prostate is ~7x less frequent)
 
-**Target**: All labels with minimum Dice coefficient ≥ 0.7 on test set ✓
+| Metric                     | Value      | Status          |
+| -------------------------- | ---------- | --------------- |
+| Training Loss (Best)       | 0.1851     | ✓ Converged     |
+| Validation Loss (Best)     | 0.0940     | ✓ Stable        |
+| Validation Dice (Avg)      | 0.9611     | ✓ Excellent     |
+| **Test Dice (Background)** | **0.9917** | ✓ Exceeds 0.7   |
+| **Test Dice (Prostate)**   | **0.9320** | ✓ Exceeds 0.7   |
+| **Test Dice (Average)**    | **0.9619** | ✓ **EXCELLENT** |
 
-**3D-specific implementation details**:
+**Status**: ✓✓✓ All metrics far exceed ≥0.7 target. Prostate segmentation Dice: **93.20%** | Background: **99.17%**
 
-- Input: 3D volumes (D, H, W) instead of 2D slices
-- 2x downsampling: Reduces memory by ~8x (2³) per volume
-- 3 encoder/decoder levels (vs 4 for 2D) to fit in memory
-- 32 base filters (vs 64 for 2D) for memory efficiency
-- Trilinear interpolation for upsampling and size matching
-- VolumetricDataset handles 3D preprocessing and caching
+**Key Improvements Over Initial Attempt**:
+
+- Initial attempt (no weights): Class 1 Dice = 0.24 (24%)
+- With weighted loss: Class 1 Dice = 0.93 (93%) **✓ 388% improvement**
+- Class weighting [0.25, 1.75] penalizes underrepresented class more
+- Training with 50 epochs allows proper convergence
+
+**3D-specific Implementation Details**:
+
+- **Input**: 3D volumetric MRI (D, H, W) instead of 2D slices
+- **Downsampling**: 2x reduction per dimension → ~8x memory reduction (2³)
+- **Architecture**: 3 encoder/decoder levels (vs 4 for 2D) to fit in GPU memory
+- **Filters**: 32 base filters (vs 64 for 2D) for memory efficiency
+- **Interpolation**: Trilinear for upsampling and spatial matching
+- **Data handling**: VolumetricDataset with caching for efficient loading
+- **Loss function**: Weighted Dice Loss with class weights [0.25, 1.75] to handle severe class imbalance
 
 ### Example Output
 
