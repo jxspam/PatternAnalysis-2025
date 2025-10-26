@@ -213,7 +213,10 @@ def train(data_dir, num_epochs=1, batch_size=1, learning_rate=1e-3, num_classes=
     ).to(device)
     
     # Loss and optimizer
-    criterion = DiceLoss(smooth=1.0, num_classes=num_classes)
+    # Class weights to handle class imbalance (inversely proportional to class frequency)
+    # Adjust these based on your data distribution
+    class_weights = [0.25, 1.75]  # Penalize underrepresented class 1 (prostate) more
+    criterion = DiceLoss(smooth=1.0, num_classes=num_classes, class_weights=class_weights)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     scheduler = ReduceLROnPlateau(
         optimizer, mode='max', factor=0.5, patience=5, verbose=True
@@ -314,12 +317,12 @@ if __name__ == "__main__":
     
     history = train(
         data_dir=data_dir,
-        num_epochs=1,
+        num_epochs=50,
         batch_size=1,
         learning_rate=1e-3,
         num_classes=2,
         device=device,
         checkpoint_dir="./checkpoints_3d",
-        early_stopping_patience=2,
+        early_stopping_patience=10,
         downsample_factor=2
     )

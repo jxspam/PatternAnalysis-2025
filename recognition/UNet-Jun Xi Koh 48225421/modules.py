@@ -190,7 +190,7 @@ class ImprovedUNet2D(nn.Module):
 
 class DiceLoss(nn.Module):
     """
-    Dice Loss for semantic segmentation.
+    Dice Loss for semantic segmentation with optional class weighting.
     
     The Dice coefficient is calculated as: 2 * (intersection) / (sum of areas)
     Loss = 1 - Dice coefficient
@@ -198,37 +198,44 @@ class DiceLoss(nn.Module):
     Args:
         smooth: Smoothing constant to avoid division by zero (default: 1.0)
         num_classes: Number of classes (default: 2)
+        class_weights: Optional list of weights for each class to handle class imbalance.
+                      If None, all classes are weighted equally. (default: None)
     """
     
-    def __init__(self, smooth=1.0, num_classes=2):
+    def __init__(self, smooth=1.0, num_classes=2, class_weights=None):
         super(DiceLoss, self).__init__()
         self.smooth = smooth
         self.num_classes = num_classes
+        # Use provided weights or default to equal weights
+        if class_weights is None:
+            self.class_weights = [1.0] * num_classes
+        else:
+            self.class_weights = class_weights
     
     def forward(self, predictions, targets):
         """
-        Calculate Dice loss.
+        Calculate weighted Dice loss.
         
         Args:
-            predictions: Model output of shape (batch, num_classes, height, width)
-            targets: Ground truth labels of shape (batch, height, width) or one-hot encoded
+            predictions: Model output of shape (batch, num_classes, height, width) or 3D
+            targets: Ground truth labels of shape (batch, height, width) or 3D
             
         Returns:
-            Dice loss value
+            Weighted Dice loss value
         """
         
         # Convert predictions to probabilities
         predictions = F.softmax(predictions, dim=1)
         
-        # Convert targets to one-hot if needed
-        if targets.dim() == 3:
+        # Convert targets to one-hot if needed (handles both 2D and 3D)
+        if targets.dim() == 3 or targets.dim() == 4:
             targets_one_hot = torch.zeros_like(predictions)
             for c in range(self.num_classes):
                 targets_one_hot[:, c] = (targets == c).float()
         else:
             targets_one_hot = targets
         
-        # Calculate Dice for each class
+        # Calculate weighted Dice loss for each class
         dice_losses = []
         for c in range(self.num_classes):
             pred_c = predictions[:, c]
@@ -239,7 +246,9 @@ class DiceLoss(nn.Module):
             target_sum = target_c.sum()
             
             dice = (2 * intersection + self.smooth) / (pred_sum + target_sum + self.smooth)
-            dice_losses.append(1 - dice)
+            # Apply class weight to loss
+            weighted_loss = (1 - dice) * self.class_weights[c]
+            dice_losses.append(weighted_loss)
         
         # Return average Dice loss across all classes
         return torch.stack(dice_losses).mean()
