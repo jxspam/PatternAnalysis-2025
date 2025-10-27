@@ -187,20 +187,21 @@ python predict.py --mode 3d --checkpoint ./checkpoints_3d/best_model.pt --volume
 
 ### 3D UNet Results
 
-**Training Configuration**: Epochs=50, Batch Size=1, Learning Rate=1e-3, Downsample Factor=2x, Early Stopping Patience=10, Adam Optimizer
+**Training Configuration**: Epochs=50 (Early Stopped at Epoch 2), Batch Size=1, Learning Rate=1e-3, Downsample Factor=2x, Early Stopping Patience=2, Adam Optimizer
 
 **Class Weights for Loss**: [0.25, 1.75] - Applied to handle class imbalance (prostate is ~7x less frequent)
 
 | Metric                     | Value      | Status          |
 | -------------------------- | ---------- | --------------- |
-| Training Loss (Best)       | 0.1851     | ✓ Converged     |
-| Validation Loss (Best)     | 0.0940     | ✓ Stable        |
-| Validation Dice (Avg)      | 0.9611     | ✓ Excellent     |
-| **Test Dice (Background)** | **0.9917** | ✓ Exceeds 0.7   |
-| **Test Dice (Prostate)**   | **0.9320** | ✓ Exceeds 0.7   |
-| **Test Dice (Average)**    | **0.9619** | ✓ **EXCELLENT** |
+| Training Loss (Best)       | 0.0896     | ✓ Converged     |
+| Validation Loss (Best)     | 0.0596     | ✓ Stable        |
+| Best Epoch                 | 2          | ✓ Early Stop     |
+| Validation Dice (Avg)      | 0.9651     | ✓ Excellent     |
+| **Test Dice (Background)** | **0.9948** | ✓ Exceeds 0.7   |
+| **Test Dice (Prostate)**   | **0.9369** | ✓ Exceeds 0.7   |
+| **Test Dice (Average)**    | **0.9659** | ✓ **EXCELLENT** |
 
-**Status**: ✓✓✓ All metrics far exceed ≥0.7 target. Prostate segmentation Dice: **93.20%** | Background: **99.17%**
+**Status**: ✓✓✓ All metrics far exceed ≥0.7 target. Prostate segmentation Dice: **93.69%** | Background: **99.48%**
 
 **Key Improvements Over Initial Attempt**:
 
