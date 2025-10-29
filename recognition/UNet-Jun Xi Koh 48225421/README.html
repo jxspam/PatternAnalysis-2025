@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>README - Improved UNet for HipMRI Study</title>
+    
+    <!-- MathJax Configuration for LaTeX -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    
+    <!-- MathJax Script -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: white;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #0066cc;
+            font-size: 28px;
+            margin: 40px 0 20px 0;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0066cc;
+            page-break-after: avoid;
+        }
+        
+        h2 {
+            color: #0066cc;
+            font-size: 20px;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            page-break-after: avoid;
+        }
+        
+        h3 {
+            color: #333;
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+            page-break-after: avoid;
+        }
+        
+        h4 {
+            color: #666;
+            font-size: 14px;
+            margin: 15px 0 8px 0;
+            page-break-after: avoid;
+        }
+        
+        p {
+            margin: 10px 0;
+            text-align: justify;
+        }
+        
+        ul {
+            margin: 10px 0 10px 30px;
+            list-style-type: disc;
+        }
+        
+        ol {
+            margin: 10px 0 10px 30px;
+            list-style-type: decimal;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+        
+        ul ul, ol ul {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #d73a49;
+        }
+        
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
+            overflow-x: auto;
+            page-break-inside: avoid;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: #333;
+            border: none;
+        }
+        
+        blockquote {
+            border-left: 4px solid #0066cc;
+            margin: 10px 0;
+            padding-left: 15px;
+            color: #666;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #0066cc;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        strong {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        
+        em {
+            font-style: italic;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px solid #ddd;
+            margin: 30px 0;
+            page-break-after: avoid;
+        }
+        
+        /* MathJax styling */
+        .MathJax {
+            margin: 2px 0 !important;
+        }
+        
+        .MathJax_Display {
+            margin: 15px 0 !important;
+            text-align: center;
+        }
+        
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+<h1>Improved UNet for HipMRI Study - 2D and 3D Segmentation</h1>
+
+<h2>Overview</h2>
+
+<p>This project implements both <strong>2D and 3D Improved UNet architectures</strong> for prostate segmentation from MRI data:</p>
+
+<ul>
+<li><strong>2D UNet</strong>: Segment 2D slices with 88.93% Dice coefficient</li>
+<li><strong>3D UNet</strong>: Segment 3D volumetric data with downsampling for memory efficiency</li>
+</ul>
+
+<p>Both models achieve excellent segmentation performance on the HipMRI Study dataset.</p>
+
+<h2>Problem Statement and Algorithm</h2>
+
+<h3>Problem Context</h3>
+
+<p><strong>Clinical Challenge</strong>: Accurate segmentation of prostate structures from MRI is essential for:</p>
+
+<ul>
+<li>Clinical diagnosis of prostate cancer</li>
+<li>Treatment planning for radiotherapy</li>
+<li>Surgical guidance</li>
+<li>Longitudinal patient monitoring</li>
+</ul>
+
+<p><strong>Technical Challenge</strong>: Class imbalance in medical imaging (background &gt;&gt; foreground), spatial complexity, and computational constraints in 3D analysis.</p>
+
+<h3>Solution: Improved UNet Architecture</h3>
+
+<p>The <strong>Improved UNet</strong> is an encoder-decoder convolutional neural network designed specifically for medical image segmentation. It addresses the challenges through:</p>
+
+<h4>Key Design Features:</h4>
+
+<ol>
+<li><p><strong>Encoder-Decoder Architecture with Skip Connections</strong></p>
+
+<ul>
+<li><strong>Encoder (Downsampling)</strong>: Progressively reduces spatial dimensions while increasing feature channels (1→64→128→256→512)</li>
+<li><strong>Bottleneck</strong>: Captures global context at the smallest resolution</li>
+<li><strong>Decoder (Upsampling)</strong>: Restores spatial resolution using transpose convolution</li>
+<li><strong>Skip Connections</strong>: Concatenate encoder outputs with decoder inputs, preserving fine-grained spatial details lost during downsampling</li>
+<li><strong>Why</strong>: Enables accurate localization + semantic understanding by combining multi-scale features</li>
+</ul></li>
+<li><p><strong>Batch Normalization</strong></p>
+
+<ul>
+<li>Normalizes layer inputs (zero mean, unit variance)</li>
+<li><strong>Benefits</strong>:
+<ul>
+<li>Stabilizes training → faster convergence</li>
+<li>Enables higher learning rates</li>
+<li>Acts as mild regularizer</li>
+</ul></li>
+<li><strong>How</strong>: Applied after each convolution before activation</li>
+</ul></li>
+<li><p><strong>Dropout Regularization (50%)</strong></p>
+
+<ul>
+<li>Randomly disables 50% of activations during training</li>
+<li><strong>Purpose</strong>: Prevents co-adaptation of neurons, reduces overfitting</li>
+<li><strong>Effect</strong>: Forces network to learn redundant representations</li>
+</ul></li>
+<li><p><strong>Weighted Dice Loss</strong></p>
+
+<ul>
+<li>Standard Dice coefficient: $\text{Dice} = \frac{2|X \cap Y|}{|X| + |Y|}$</li>
+<li>With class weights: $\text{Loss} = 1 - \sum_c w_c \cdot \text{Dice}_c$</li>
+<li><strong>Addresses class imbalance</strong>: Penalizes errors on minority class (prostate)</li>
+<li><strong>Class Imbalance Problem</strong> (3D): Background voxels ~7× more frequent than prostate voxels
+<ul>
+<li>Without weighting: Model learns to ignore prostate (24% Dice)</li>
+<li>With weights [0.25, 1.75]: Model focuses on minority class (93% Dice) → <strong>388% improvement</strong></li>
+</ul></li>
+</ul></li>
+</ol>
+
+<h4>2D Architecture:</h4>
+
+<pre><code>Input (1, H, W)
+  ↓
+Encoder L1: Conv 1→64, MaxPool → (64, H/2, W/2)
+Encoder L2: Conv 64→128, MaxPool → (128, H/4, W/4)
+Encoder L3: Conv 128→256, MaxPool → (256, H/8, W/8)
+Encoder L4: Conv 256→512, MaxPool → (512, H/16, W/16)
+  ↓
+Bottleneck: Conv 512→512
+  ↓
+Decoder L4: UpConv + Skip(L4) → (256, H/8, W/8)
+Decoder L3: UpConv + Skip(L3) → (128, H/4, W/4)
+Decoder L2: UpConv + Skip(L2) → (64, H/2, W/2)
+Decoder L1: UpConv + Skip(L1) → (32, H, W)
+  ↓
+Output Conv 32→2 → (2, H, W) [logits for background &amp; prostate]
+</code></pre>
+
+<h4>3D Architecture (Memory-Optimized):</h4>
+
+<pre><code>Input (1, D, H, W)
+  ↓
+Encoder L1: Conv3D 1→32, MaxPool3D → (32, D/2, H/2, W/2)
+Encoder L2: Conv3D 32→64, MaxPool3D → (64, D/4, H/4, W/4)
+Encoder L3: Conv3D 64→128, MaxPool3D → (128, D/8, H/8, W/8)
+  ↓
+Bottleneck: Conv3D 128→256
+  ↓
+Decoder L3: UpConv3D + Skip(L3) → (128, D/4, H/4, W/4)
+Decoder L2: UpConv3D + Skip(L2) → (64, D/2, H/2, W/2)
+Decoder L1: UpConv3D + Skip(L1) → (32, D, H, W)
+  ↓
+Output Conv3D 32→2 → (2, D, H, W)
+</code></pre>
+
+<p><strong>Why 3D has fewer levels</strong>: 3D convolutions are computationally expensive (8× more parameters than 2D). Fewer levels + smaller filters (32 vs 64) + 2× downsampling achieve memory efficiency while preserving accuracy.</p>
+
+<h2>Datasets</h2>
+
+<h3>2D Dataset: HipMRI Study 2D Slices</h3>
+
+<ul>
+<li><strong>25,320 NIfTI files</strong>, 256×128 pixels, 2 classes (background: 0, prostate: 1)</li>
+<li>Pre-split: Train 60% | Validation 20% | Test 20%</li>
+<li>Path: <code>/home/groups/comp3710/HipMRI_Study_open/keras_slices_data</code></li>
+</ul>
+
+<h3>3D Dataset: HipMRI Study Volumetric Data</h3>
+
+<ul>
+<li><strong>38 patients &amp; 211 3D MRI volumes</strong>, variable dimensions, 2 classes</li>
+<li>Downsampled 2x in each dimension for memory efficiency</li>
+<li>Split: Train 60% | Validation 20% | Test 20%</li>
+<li>Paths:
+<ul>
+<li>Volumes: <code>/home/groups/comp3710/HipMRI_Study_open/semantic_MRs</code></li>
+<li>Labels: <code>/home/groups/comp3710/HipMRI_Study_open/semantic_labels_only</code></li>
+</ul></li>
+</ul>
+
+<h3>Preprocessing</h3>
+
+<ol>
+<li><strong>Normalization</strong>: Min-max to [0, 1] for consistent intensity ranges</li>
+<li><strong>Augmentation</strong> (2D training only):
+<ul>
+<li>Random rotation: ±15°</li>
+<li>Random horizontal/vertical flip: 50% probability</li>
+</ul></li>
+<li><strong>3D Downsampling</strong>: 2x reduction per dimension using trilinear interpolation</li>
+<li><strong>Consistent augmentation</strong>: Same seed for image and label transforms</li>
+</ol>
+
+<p><strong>Justification</strong>:</p>
+
+<ul>
+<li>Normalization improves convergence across different MRI scans</li>
+<li>Augmentation increases dataset diversity and prevents overfitting</li>
+<li>3D downsampling reduces memory requirements while preserving information</li>
+<li>Train/val/test split (60/20/20) provides robust evaluation</li>
+</ul>
+
+<h2>Usage</h2>
+
+<h3>Installation</h3>
+
+<div class="codehilite">
+<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre>
+</div>
+
+<h3>Script Descriptions and Comments</h3>
+
+<h4>1. <code>modules.py</code> - Model Architecture</h4>
+
+<p><strong>Purpose</strong>: Defines all neural network components</p>
+
+<p><strong>Key Components</strong>:</p>
+
+<ul>
+<li><code>ConvBlock</code>: Double convolution with batch norm and dropout for stable training</li>
+<li><code>UpConvBlock</code>: Transpose convolution for upsampling</li>
+<li><code>ImprovedUNet2D</code>: 2D encoder-decoder with 4 levels</li>
+<li><code>ImprovedUNet3D</code>: 3D encoder-decoder with 3 levels (memory-optimized)</li>
+<li><code>DiceLoss</code>: Weighted Dice loss supporting class imbalance correction</li>
+<li><code>dice_coefficient()</code>: Metric computation for 2D segmentation</li>
+<li><code>dice_coefficient_3d()</code>: Metric computation for 3D segmentation</li>
+</ul>
+
+<p><strong>Inline Comments</strong>: Each class includes docstrings explaining architecture, forward pass, and purpose of each component.</p>
+
+<h4>2. <code>dataset.py</code> - Data Loading</h4>
+
+<p><strong>Purpose</strong>: Handles loading, preprocessing, and augmentation</p>
+
+<p><strong>Key Classes/Functions</strong>:</p>
+
+<ul>
+<li><code>MedicalImageDataset</code>: PyTorch Dataset for 2D slices with augmentation (rotation ±15°, flip)</li>
+<li><code>VolumetricDataset</code>: PyTorch Dataset for 3D volumes with 2× downsampling</li>
+<li><code>load_keras_slices()</code>: Load 2D slices with train/val/test split (60/20/20)</li>
+<li><code>load_semantic_data()</code>: Load 3D volumes with downsample factor</li>
+<li><code>create_data_loaders()</code>: Unified wrapper supporting <code>mode='2d'</code> or <code>mode='3d'</code></li>
+</ul>
+
+<p><strong>Preprocessing Details</strong>:</p>
+
+<ul>
+<li>Min-max normalization to [0, 1] range</li>
+<li>2D augmentation: Random rotation, horizontal/vertical flip</li>
+<li>3D downsampling: Trilinear interpolation for smooth reduction</li>
+</ul>
+
+<h4>3. <code>train.py</code> - Training Script</h4>
+
+<p><strong>Purpose</strong>: Training loop with validation, early stopping, and checkpointing</p>
+
+<p><strong>Workflow</strong>:</p>
+
+<pre><code>1. Parse arguments (--mode, --data_dir, --epochs, --batch_size, etc.)
+2. Load data via create_data_loaders()
+3. Initialize model (ImprovedUNet2D or ImprovedUNet3D based on mode)
+4. Create optimizer (Adam) and loss function (weighted Dice)
+5. For each epoch:
+   - Train on all batches, compute train loss/Dice
+   - Validate, compute val loss/Dice
+   - Save checkpoint if val loss improves
+   - Early stopping if no improvement for N epochs
+6. Plot training curves and save to checkpoints/
+</code></pre>
+
+<p><strong>Key Features</strong>:</p>
+
+<ul>
+<li>Automatic device selection (CUDA if available, else CPU)</li>
+<li>Class weights [0.25, 1.75] applied for 3D to handle 7× class imbalance</li>
+<li>Learning rate scheduling (ReduceLROnPlateau)</li>
+<li>Saves best model and training history as JSON</li>
+</ul>
+
+<h4>4. <code>predict.py</code> - Inference Script</h4>
+
+<p><strong>Purpose</strong>: Load trained model and make predictions on new data</p>
+
+<p><strong>Functions</strong>:</p>
+
+<ul>
+<li><code>load_model()</code>: Load checkpoint and initialize model</li>
+<li><code>predict_single_image()</code>: 2D inference (input: H×W → output: class map)</li>
+<li><code>predict_single_volume()</code>: 3D inference with downsampling/upsampling</li>
+<li><code>evaluate_predictions()</code>: Compute Dice score against ground truth</li>
+<li><code>visualize_prediction()</code>: Plot prediction with overlay</li>
+</ul>
+
+<p><strong>Workflow</strong>:</p>
+
+<pre><code>1. Load model from checkpoint
+2. Load image/volume from NIfTI file
+3. Normalize to [0, 1]
+4. For 3D: Downsample by factor 2
+5. Prepare batch: (1, C, H, W) or (1, C, D, H, W)
+6. Forward pass: model(batch) → logits
+7. Apply softmax → probabilities
+8. Argmax → class predictions {0, 1}
+9. Compute Dice if ground truth available
+10. Visualize and save results
+</code></pre>
+
+<h4>5. <code>load_nifti.py</code> - NIfTI Loading Examples</h4>
+
+<p><strong>Purpose</strong>: Demonstrates Nibabel/Nilearn usage for loading medical imaging data</p>
+
+<p><strong>Functions</strong>:</p>
+
+<ul>
+<li><code>load_data_2D()</code>: Load 2D slices from list of NIfTI files</li>
+<li><code>load_data_3D()</code>: Load 3D volumes from list of NIfTI files</li>
+<li><code>to_channels()</code>: Convert label to one-hot encoding</li>
+</ul>
+
+<p><strong>Usage Context</strong>: Reference implementation showing low-level NIfTI handling before integration into PyTorch Dataset.</p>
+
+<h4>6. <code>test.py</code>, <code>test2d.py</code>, <code>test3d.py</code> - Automated Testing</h4>
+
+<p><strong>Purpose</strong>: End-to-end testing for GPU cluster submission</p>
+
+<p><strong>Features</strong>:</p>
+
+<ul>
+<li>Auto-detect data paths (Rangpur <code>/home/groups/comp3710/HipMRI_Study_open</code> or local <code>./HipMRI_Study_open</code>)</li>
+<li>Run training with fixed params (epochs=1, batch_size=1) for quick testing</li>
+<li>Generate validation metrics and visualizations</li>
+<li>Handle missing data gracefully</li>
+</ul>
+
+<h3>2D UNet Training (2D Slices)</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Automated test script (recommended) - detects data path automatically</span>
+python<span class="w"> </span>test2d.py
+
+<span class="c1"># Manual training with custom parameters</span>
+python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open/keras_slices_data<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span>
+</code></pre>
+</div>
+
+<p><strong>Expected Output</strong>:</p>
+
+<ul>
+<li>Model checkpoint saved to <code>checkpoints/best_model_epoch_X.pt</code></li>
+<li>Training curves saved to <code>checkpoints/dice_loss_curves.png</code></li>
+<li>Training history (JSON) with epoch-wise metrics</li>
+<li>Dice score ~88% on test set</li>
+</ul>
+
+<h3>3D UNet Training (Volumetric Data)</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Automated test script (recommended)</span>
+python<span class="w"> </span>test3d.py
+
+<span class="c1"># Manual training with custom parameters</span>
+python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">1</span><span class="w"> </span>--downsample_factor<span class="w"> </span><span class="m">2</span>
+</code></pre>
+</div>
+
+<p><strong>Expected Output</strong>:</p>
+
+<ul>
+<li>Model checkpoint to <code>checkpoints_3d/best_model_epoch_X.pt</code></li>
+<li>Training metrics with class weights applied</li>
+<li>Dice score ~93% on test set</li>
+<li>Early stopping typically around epoch 2-3</li>
+</ul>
+
+<h3>2D Inference</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">modules</span> <span class="kn">import</span> <span class="n">ImprovedUNet2D</span>
+<span class="kn">from</span> <span class="nn">predict</span> <span class="kn">import</span> <span class="n">load_model</span><span class="p">,</span> <span class="n">predict_single_image</span>
+
+<span class="c1"># Load model</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="s2">&quot;checkpoints/best_model_epoch_1.pt&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;2d&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Predict single slice</span>
+<span class="n">prediction</span><span class="p">,</span> <span class="n">image</span> <span class="o">=</span> <span class="n">predict_single_image</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="s2">&quot;path/to/slice.nii.gz&quot;</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+<span class="p">)</span>
+<span class="c1"># Returns:</span>
+<span class="c1">#   prediction shape: (H, W) - class indices {0=background, 1=prostate}</span>
+<span class="c1">#   image shape: (H, W) - normalized input</span>
+</code></pre>
+</div>
+
+<h3>3D Inference</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">modules</span> <span class="kn">import</span> <span class="n">ImprovedUNet3D</span>
+<span class="kn">from</span> <span class="nn">predict</span> <span class="kn">import</span> <span class="n">load_model</span><span class="p">,</span> <span class="n">predict_single_volume</span>
+
+<span class="c1"># Load model</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="s2">&quot;checkpoints_3d/best_model_epoch_1.pt&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Predict volume with downsampling</span>
+<span class="n">prediction</span><span class="p">,</span> <span class="n">downsampled_vol</span><span class="p">,</span> <span class="n">original_vol</span> <span class="o">=</span> <span class="n">predict_single_volume</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="s2">&quot;path/to/volume.nii.gz&quot;</span><span class="p">,</span>
+    <span class="n">downsample_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+<span class="p">)</span>
+<span class="c1"># Returns:</span>
+<span class="c1">#   prediction shape: (D, H, W) - class indices upsampled back to original</span>
+<span class="c1">#   downsampled_vol: Volume at 2× downsampled resolution (used by model)</span>
+<span class="c1">#   original_vol: Original input volume</span>
+</code></pre>
+</div>
+
+<h3>Command-Line Arguments</h3>
+
+<div class="codehilite">
+<pre><span></span><code>python<span class="w"> </span>train.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mode<span class="w"> </span>2d<span class="w">                              </span><span class="c1"># or &#39;3d&#39;</span>
+<span class="w">    </span>--data_dir<span class="w"> </span>./HipMRI_Study_open<span class="w">         </span><span class="c1"># path to data</span>
+<span class="w">    </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w">                            </span><span class="c1"># number of training epochs</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w">                        </span><span class="c1"># batch size (1-4 for 3D)</span>
+<span class="w">    </span>--learning_rate<span class="w"> </span><span class="m">0</span>.001<span class="w">                  </span><span class="c1"># Adam learning rate</span>
+<span class="w">    </span>--early_stop_patience<span class="w"> </span><span class="m">5</span><span class="w">                </span><span class="c1"># epochs without improvement</span>
+<span class="w">    </span>--downsample_factor<span class="w"> </span><span class="m">2</span><span class="w">                  </span><span class="c1"># 3D only, memory reduction</span>
+<span class="w">    </span>--num_workers<span class="w"> </span><span class="m">4</span><span class="w">                        </span><span class="c1"># DataLoader workers</span>
+</code></pre>
+</div>
+
+<h2>Implementation Files</h2>
+
+<p><strong>Unified Architecture</strong> (consolidated 2D and 3D implementations):</p>
+
+<table>
+<thead>
+<tr>
+  <th>File</th>
+  <th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>modules.py</code></td>
+  <td>2D/3D components: ConvBlock2D/3D, UpConvBlock2D/3D, ImprovedUNet2D/3D, shared DiceLoss with class weighting</td>
+</tr>
+<tr>
+  <td><code>dataset.py</code></td>
+  <td><strong>Unified</strong> 2D and 3D data loading via <code>mode='2d'/'3d'</code> parameter:</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- 2D: MedicalImageDataset, load<em>keras</em>slices(), for 2D slices</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- 3D: VolumetricDataset, load<em>semantic</em>data(), with automatic downsampling (2x)</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- Unified: create<em>data</em>loaders(mode='2d'/'3d') wrapper function</td>
+</tr>
+<tr>
+  <td><code>train.py</code></td>
+  <td><strong>Unified</strong> training script supporting both 2D and 3D via <code>mode='2d'/'3d'</code> parameter:</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- train(mode='2d'/'3d', ...): Automatically selects model, loss, and data loader</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- Supports argparse: <code>--mode 2d/3d --epochs 50 --downsample_factor 2</code></td>
+</tr>
+<tr>
+  <td></td>
+  <td>- Class weights [0.25, 1.75] applied only for 3D to handle imbalance</td>
+</tr>
+<tr>
+  <td><code>predict.py</code></td>
+  <td><strong>Unified</strong> inference script supporting both 2D and 3D via <code>mode='2d'/'3d'</code> parameter:</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- load<em>model(checkpoint</em>path, mode='2d'/'3d'): Load appropriate model</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- predict<em>single</em>image(): 2D inference</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- predict<em>single</em>volume(): 3D inference with downsampling</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- evaluate_predictions(): Compute Dice scores (auto-selects 2D or 3D function)</td>
+</tr>
+<tr>
+  <td><code>load_nifti.py</code></td>
+  <td>Example: Loading NIfTI files using nibabel and nilearn</td>
+</tr>
+<tr>
+  <td><code>test.py</code></td>
+  <td>Automated test suite for 2D Rangpur/local execution (mode='2d')</td>
+</tr>
+<tr>
+  <td><code>test2d.py</code></td>
+  <td>Alternative test suite for 2D execution</td>
+</tr>
+<tr>
+  <td><code>test3d.py</code></td>
+  <td>Automated test suite for 3D Rangpur/local execution (mode='3d')</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Usage Examples</strong>:</p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># 2D Training</span>
+python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open/keras_slices_data<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span>
+
+<span class="c1"># 3D Training</span>
+python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--downsample_factor<span class="w"> </span><span class="m">2</span>
+
+<span class="c1"># 2D Prediction</span>
+python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--checkpoint<span class="w"> </span>./checkpoints/best_model.pt<span class="w"> </span>--image_path<span class="w"> </span>input.nii.gz
+
+<span class="c1"># 3D Prediction</span>
+python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--checkpoint<span class="w"> </span>./checkpoints_3d/best_model.pt<span class="w"> </span>--volume_path<span class="w"> </span>volume.nii.gz
+</code></pre>
+</div>
+
+<h2>Results</h2>
+
+<h3>2D UNet Results</h3>
+
+<p><strong>Training Configuration</strong>: Epochs=1, Batch Size=1, Learning Rate=1e-3, Adam Optimizer</p>
+
+<table>
+<thead>
+<tr>
+  <th>Metric</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Training Loss</td>
+  <td>0.0790</td>
+</tr>
+<tr>
+  <td>Validation Dice</td>
+  <td>0.9112</td>
+</tr>
+<tr>
+  <td>Test Dice (Background)</td>
+  <td>0.9593</td>
+</tr>
+<tr>
+  <td><strong>Test Dice (Prostate)</strong></td>
+  <td><strong>0.8893 ✓</strong></td>
+</tr>
+<tr>
+  <td>Test Dice (Average)</td>
+  <td>0.9243</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Status</strong>: ✓ Exceeds 0.75 target. Prostate segmentation Dice: <strong>88.93%</strong></p>
+
+<h3>3D UNet Results</h3>
+
+<p><strong>Training Configuration</strong>: Epochs=50 (Early Stopped at Epoch 2), Batch Size=1, Learning Rate=1e-3, Downsample Factor=2x, Early Stopping Patience=2, Adam Optimizer</p>
+
+<p><strong>Class Weights for Loss</strong>: [0.25, 1.75] - Applied to handle class imbalance (prostate is ~7x less frequent)</p>
+
+<table>
+<thead>
+<tr>
+  <th>Metric</th>
+  <th>Value</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Training Loss (Best)</td>
+  <td>0.0896</td>
+  <td>✓ Converged</td>
+</tr>
+<tr>
+  <td>Validation Loss (Best)</td>
+  <td>0.0596</td>
+  <td>✓ Stable</td>
+</tr>
+<tr>
+  <td>Best Epoch</td>
+  <td>2</td>
+  <td>✓ Early Stop</td>
+</tr>
+<tr>
+  <td>Validation Dice (Avg)</td>
+  <td>0.9651</td>
+  <td>✓ Excellent</td>
+</tr>
+<tr>
+  <td><strong>Test Dice (Background)</strong></td>
+  <td><strong>0.9948</strong></td>
+  <td>✓ Exceeds 0.7</td>
+</tr>
+<tr>
+  <td><strong>Test Dice (Prostate)</strong></td>
+  <td><strong>0.9369</strong></td>
+  <td>✓ Exceeds 0.7</td>
+</tr>
+<tr>
+  <td><strong>Test Dice (Average)</strong></td>
+  <td><strong>0.9659</strong></td>
+  <td>✓ <strong>EXCELLENT</strong></td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Status</strong>: ✓✓✓ All metrics far exceed ≥0.7 target. Prostate segmentation Dice: <strong>93.69%</strong> | Background: <strong>99.48%</strong></p>
+
+<p><strong>Key Improvements Over Initial Attempt</strong>:</p>
+
+<ul>
+<li>Initial attempt (no weights): Class 1 Dice = 0.24 (24%)</li>
+<li>With weighted loss: Class 1 Dice = 0.93 (93%) <strong>✓ 388% improvement</strong></li>
+<li>Class weighting [0.25, 1.75] penalizes underrepresented class more</li>
+<li>Training with 50 epochs allows proper convergence</li>
+</ul>
+
+<p><strong>3D-specific Implementation Details</strong>:</p>
+
+<ul>
+<li><strong>Input</strong>: 3D volumetric MRI (D, H, W) instead of 2D slices</li>
+<li><strong>Downsampling</strong>: 2x reduction per dimension → ~8x memory reduction (2³)</li>
+<li><strong>Architecture</strong>: 3 encoder/decoder levels (vs 4 for 2D) to fit in GPU memory</li>
+<li><strong>Filters</strong>: 32 base filters (vs 64 for 2D) for memory efficiency</li>
+<li><strong>Interpolation</strong>: Trilinear for upsampling and spatial matching</li>
+<li><strong>Data handling</strong>: VolumetricDataset with caching for efficient loading</li>
+<li><strong>Loss function</strong>: Weighted Dice Loss with class weights [0.25, 1.75] to handle severe class imbalance</li>
+</ul>
+
+<h3>Example Output</h3>
+
+<p><strong>Input</strong>: MRI slice (256×128, single-channel grayscale)
+<strong>Output</strong>: Segmentation mask (256×128, two classes)</p>
+
+<p>Visualizations saved to <code>prediction_results/</code>:</p>
+
+<ul>
+<li><code>test_sample_000.png</code> - Side-by-side input/prediction/ground-truth</li>
+<li><code>test_predictions_grid.png</code> - Overview grid of all predictions</li>
+<li><code>dice_distribution.png</code> - Histogram of Dice scores per class</li>
+</ul>
+
+<p>Training metrics saved to <code>checkpoints/</code>:</p>
+
+<ul>
+<li><code>dice_loss_curves.png</code> - 4-panel plot: loss, Dice per epoch, per-class Dice</li>
+<li><code>training_history.json</code> - Numerical results</li>
+</ul>
+
+<h2>Resource Optimization</h2>
+
+<p><strong>Storage Constraint Solution</strong> (10GB limit):</p>
+
+<ul>
+<li>Removed unnecessary packages: TensorFlow, Keras, scipy, scikit-image, opencv-python, pandas, nilearn</li>
+<li>Final dependencies: torch, torchvision, nibabel, numpy, matplotlib, tqdm (~2-3GB)</li>
+<li>Training: 1 epoch, batch size 1 → minimal memory, excellent quality</li>
+<li><strong>3D optimization</strong>: Downsampling (2x) reduces memory footprint by ~8x per volume</li>
+</ul>
+
+<h2>References</h2>
+
+<ol>
+<li>Ronneberger et al. (2015). U-Net: Convolutional Networks for Biomedical Image Segmentation. MICCAI.</li>
+<li>Dice, L. R. (1945). Measures of Ecologic Association Between Species. Ecology.</li>
+<li>Milletari et al. (2016). V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation. 3DV.</li>
+</ol>
+
+<hr />
+
+<p><strong>Author</strong>: Jun Xi Koh (48225421) | <strong>Course</strong>: COMP3710 | <strong>Date</strong>: 2025-10-27 | <strong>Version</strong>: 4.0 (2D + 3D UNet)</p>
+
+
+    <script>
+        // Ensure MathJax processes after page load
+        window.addEventListener('load', function() {
+            if (window.MathJax) {
+                MathJax.typesetPromise().catch(err => console.log(err));
+            }
+        });
+    </script>
+</body>
+</html>
