@@ -195,7 +195,7 @@ python predict.py --mode 3d --checkpoint ./checkpoints_3d/best_model.pt --volume
 | -------------------------- | ---------- | --------------- |
 | Training Loss (Best)       | 0.0896     | ✓ Converged     |
 | Validation Loss (Best)     | 0.0596     | ✓ Stable        |
-| Best Epoch                 | 2          | ✓ Early Stop     |
+| Best Epoch                 | 2          | ✓ Early Stop    |
 | Validation Dice (Avg)      | 0.9651     | ✓ Excellent     |
 | **Test Dice (Background)** | **0.9948** | ✓ Exceeds 0.7   |
 | **Test Dice (Prostate)**   | **0.9369** | ✓ Exceeds 0.7   |
