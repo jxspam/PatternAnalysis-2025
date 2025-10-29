@@ -54,13 +54,16 @@ def html_to_pdf_via_chrome(html_file, pdf_file):
     try:
         print(f"✓ Found browser at: {chrome_path}")
         print(f"⏳ Converting {html_file.name} to PDF...")
+        print(f"   - Header: Custom title (Improved 3D UNet for HipMRI Study)")
+        print(f"   - Footer: Page numbers only (no URL, no date/time)")
         
-        # Chrome headless mode for PDF printing
+        # Chrome headless mode for PDF printing with custom settings
         cmd = [
             chrome_path,
             f"--headless=new",
             "--disable-gpu",
             f"--print-to-pdf={pdf_file}",
+            "--print-to-pdf-no-header",  # Disable default header/footer
             f"file:///{html_file}",
         ]
         

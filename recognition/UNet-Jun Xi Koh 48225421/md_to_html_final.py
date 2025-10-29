@@ -101,7 +101,24 @@ def convert_md_to_html_markdown2(md_file, html_file):
         
         @page {{
             size: A4;
-            margin: 2cm;
+            margin: 2.5cm;
+            @top-center {{
+                content: "Improved 3D UNet for HipMRI Study";
+                font-size: 12pt;
+                color: #0066cc;
+                font-weight: bold;
+            }}
+            @bottom-center {{
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 10pt;
+                color: #666;
+            }}
+        }}
+        
+        @page :first {{
+            @top-center {{
+                content: "";
+            }}
         }}
         
         body {{

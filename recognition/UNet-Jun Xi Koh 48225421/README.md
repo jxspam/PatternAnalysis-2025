@@ -229,21 +229,9 @@ pip install -r requirements.txt
 10. Visualize and save results
 ```
 
-#### 5. `load_nifti.py` - NIfTI Loading Examples
+#### 5. `test.py` - Automated Testing for Rangpur GPU Cluster
 
-**Purpose**: Demonstrates Nibabel/Nilearn usage for loading medical imaging data
-
-**Functions**:
-
-- `load_data_2D()`: Load 2D slices from list of NIfTI files
-- `load_data_3D()`: Load 3D volumes from list of NIfTI files
-- `to_channels()`: Convert label to one-hot encoding
-
-**Usage Context**: Reference implementation showing low-level NIfTI handling before integration into PyTorch Dataset.
-
-#### 6. `test.py`, `test2d.py`, `test3d.py` - Automated Testing
-
-**Purpose**: End-to-end testing for GPU cluster submission
+**Purpose**: End-to-end testing for GPU cluster submission (Rangpur) with automatic data detection
 
 **Features**:
 
@@ -256,7 +244,7 @@ pip install -r requirements.txt
 
 ```bash
 # Automated test script (recommended) - detects data path automatically
-python test2d.py
+python test.py
 
 # Manual training with custom parameters
 python train.py --mode 2d --data_dir ./HipMRI_Study_open/keras_slices_data --epochs 50 --batch_size 32
@@ -272,9 +260,6 @@ python train.py --mode 2d --data_dir ./HipMRI_Study_open/keras_slices_data --epo
 ### 3D UNet Training (Volumetric Data)
 
 ```bash
-# Automated test script (recommended)
-python test3d.py
-
 # Manual training with custom parameters
 python train.py --mode 3d --data_dir ./HipMRI_Study_open --epochs 50 --batch_size 1 --downsample_factor 2
 ```
@@ -286,7 +271,9 @@ python train.py --mode 3d --data_dir ./HipMRI_Study_open --epochs 50 --batch_siz
 - Dice score ~93% on test set
 - Early stopping typically around epoch 2-3
 
-### 2D Inference
+### Model Usage Examples
+
+#### 2D Inference
 
 ```python
 import torch
@@ -350,34 +337,34 @@ python train.py \
 
 **Unified Architecture** (consolidated 2D and 3D implementations):
 
-| File            | Purpose                                                                                                     |
-| --------------- | ----------------------------------------------------------------------------------------------------------- |
-| `modules.py`    | 2D/3D components: ConvBlock2D/3D, UpConvBlock2D/3D, ImprovedUNet2D/3D, shared DiceLoss with class weighting |
-| `dataset.py`    | **Unified** 2D and 3D data loading via `mode='2d'/'3d'` parameter:                                          |
-|                 | - 2D: MedicalImageDataset, load_keras_slices(), for 2D slices                                               |
-|                 | - 3D: VolumetricDataset, load_semantic_data(), with automatic downsampling (2x)                             |
-|                 | - Unified: create_data_loaders(mode='2d'/'3d') wrapper function                                             |
-| `train.py`      | **Unified** training script supporting both 2D and 3D via `mode='2d'/'3d'` parameter:                       |
-|                 | - train(mode='2d'/'3d', ...): Automatically selects model, loss, and data loader                            |
-|                 | - Supports argparse: `--mode 2d/3d --epochs 50 --downsample_factor 2`                                       |
-|                 | - Class weights [0.25, 1.75] applied only for 3D to handle imbalance                                        |
-| `predict.py`    | **Unified** inference script supporting both 2D and 3D via `mode='2d'/'3d'` parameter:                      |
-|                 | - load_model(checkpoint_path, mode='2d'/'3d'): Load appropriate model                                       |
-|                 | - predict_single_image(): 2D inference                                                                      |
-|                 | - predict_single_volume(): 3D inference with downsampling                                                   |
-|                 | - evaluate_predictions(): Compute Dice scores (auto-selects 2D or 3D function)                              |
-| `load_nifti.py` | Example: Loading NIfTI files using nibabel and nilearn                                                      |
-| `test.py`       | Automated test suite for 2D Rangpur/local execution (mode='2d')                                             |
-| `test2d.py`     | Alternative test suite for 2D execution                                                                     |
-| `test3d.py`     | Automated test suite for 3D Rangpur/local execution (mode='3d')                                             |
+| File         | Purpose                                                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------------------- |
+| `modules.py` | 2D/3D components: ConvBlock2D/3D, UpConvBlock2D/3D, ImprovedUNet2D/3D, shared DiceLoss with class weighting |
+| `dataset.py` | **Unified** 2D and 3D data loading via `mode='2d'/'3d'` parameter:                                          |
+|              | - 2D: MedicalImageDataset, load_keras_slices(), for 2D slices                                               |
+|              | - 3D: VolumetricDataset, load_semantic_data(), with automatic downsampling (2x)                             |
+|              | - Unified: create_data_loaders(mode='2d'/'3d') wrapper function                                             |
+| `train.py`   | **Unified** training script supporting both 2D and 3D via `mode='2d'/'3d'` parameter:                       |
+|              | - train(mode='2d'/'3d', ...): Automatically selects model, loss, and data loader                            |
+|              | - Supports argparse: `--mode 2d/3d --epochs 50 --downsample_factor 2`                                       |
+|              | - Class weights [0.25, 1.75] applied only for 3D to handle imbalance                                        |
+| `predict.py` | **Unified** inference script supporting both 2D and 3D via `mode='2d'/'3d'` parameter:                      |
+|              | - load_model(checkpoint_path, mode='2d'/'3d'): Load appropriate model                                       |
+|              | - predict_single_image(): 2D inference                                                                      |
+|              | - predict_single_volume(): 3D inference with downsampling                                                   |
+|              | - evaluate_predictions(): Compute Dice scores (auto-selects 2D or 3D function)                              |
+| `test.py`    | Automated test suite for Rangpur GPU cluster submission with auto data-path detection (2D/3D via train.py)  |
 
 **Usage Examples**:
 
 ```bash
-# 2D Training
+# Automated test (recommended for Rangpur submission)
+python test.py
+
+# 2D Training with custom parameters
 python train.py --mode 2d --data_dir ./HipMRI_Study_open/keras_slices_data --epochs 50
 
-# 3D Training
+# 3D Training with custom parameters
 python train.py --mode 3d --data_dir ./HipMRI_Study_open --epochs 50 --downsample_factor 2
 
 # 2D Prediction

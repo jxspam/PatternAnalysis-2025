@@ -33,7 +33,24 @@
         
         @page {
             size: A4;
-            margin: 2cm;
+            margin: 2.5cm;
+            @top-center {
+                content: "Improved 3D UNet for HipMRI Study";
+                font-size: 12pt;
+                color: #0066cc;
+                font-weight: bold;
+            }
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+        
+        @page :first {
+            @top-center {
+                content: "";
+            }
         }
         
         body {
@@ -461,23 +478,9 @@ Output Conv3D 32→2 → (2, D, H, W)
 10. Visualize and save results
 </code></pre>
 
-<h4>5. <code>load_nifti.py</code> - NIfTI Loading Examples</h4>
+<h4>5. <code>test.py</code> - Automated Testing for Rangpur GPU Cluster</h4>
 
-<p><strong>Purpose</strong>: Demonstrates Nibabel/Nilearn usage for loading medical imaging data</p>
-
-<p><strong>Functions</strong>:</p>
-
-<ul>
-<li><code>load_data_2D()</code>: Load 2D slices from list of NIfTI files</li>
-<li><code>load_data_3D()</code>: Load 3D volumes from list of NIfTI files</li>
-<li><code>to_channels()</code>: Convert label to one-hot encoding</li>
-</ul>
-
-<p><strong>Usage Context</strong>: Reference implementation showing low-level NIfTI handling before integration into PyTorch Dataset.</p>
-
-<h4>6. <code>test.py</code>, <code>test2d.py</code>, <code>test3d.py</code> - Automated Testing</h4>
-
-<p><strong>Purpose</strong>: End-to-end testing for GPU cluster submission</p>
+<p><strong>Purpose</strong>: End-to-end testing for GPU cluster submission (Rangpur) with automatic data detection</p>
 
 <p><strong>Features</strong>:</p>
 
@@ -492,7 +495,7 @@ Output Conv3D 32→2 → (2, D, H, W)
 
 <div class="codehilite">
 <pre><span></span><code><span class="c1"># Automated test script (recommended) - detects data path automatically</span>
-python<span class="w"> </span>test2d.py
+python<span class="w"> </span>test.py
 
 <span class="c1"># Manual training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open/keras_slices_data<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span>
@@ -511,10 +514,7 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
 <h3>3D UNet Training (Volumetric Data)</h3>
 
 <div class="codehilite">
-<pre><span></span><code><span class="c1"># Automated test script (recommended)</span>
-python<span class="w"> </span>test3d.py
-
-<span class="c1"># Manual training with custom parameters</span>
+<pre><span></span><code><span class="c1"># Manual training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">1</span><span class="w"> </span>--downsample_factor<span class="w"> </span><span class="m">2</span>
 </code></pre>
 </div>
@@ -528,7 +528,9 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
 <li>Early stopping typically around epoch 2-3</li>
 </ul>
 
-<h3>2D Inference</h3>
+<h3>Model Usage Examples</h3>
+
+<h4>2D Inference</h4>
 
 <div class="codehilite">
 <pre><span></span><code><span class="kn">import</span> <span class="nn">torch</span>
@@ -660,20 +662,8 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
   <td>- evaluate_predictions(): Compute Dice scores (auto-selects 2D or 3D function)</td>
 </tr>
 <tr>
-  <td><code>load_nifti.py</code></td>
-  <td>Example: Loading NIfTI files using nibabel and nilearn</td>
-</tr>
-<tr>
   <td><code>test.py</code></td>
-  <td>Automated test suite for 2D Rangpur/local execution (mode='2d')</td>
-</tr>
-<tr>
-  <td><code>test2d.py</code></td>
-  <td>Alternative test suite for 2D execution</td>
-</tr>
-<tr>
-  <td><code>test3d.py</code></td>
-  <td>Automated test suite for 3D Rangpur/local execution (mode='3d')</td>
+  <td>Automated test suite for Rangpur GPU cluster submission with auto data-path detection (2D/3D via train.py)</td>
 </tr>
 </tbody>
 </table>
@@ -681,10 +671,13 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
 <p><strong>Usage Examples</strong>:</p>
 
 <div class="codehilite">
-<pre><span></span><code><span class="c1"># 2D Training</span>
+<pre><span></span><code><span class="c1"># Automated test (recommended for Rangpur submission)</span>
+python<span class="w"> </span>test.py
+
+<span class="c1"># 2D Training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open/keras_slices_data<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span>
 
-<span class="c1"># 3D Training</span>
+<span class="c1"># 3D Training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--downsample_factor<span class="w"> </span><span class="m">2</span>
 
 <span class="c1"># 2D Prediction</span>
@@ -829,25 +822,6 @@ python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span clas
 <li><code>dice_loss_curves.png</code> - 4-panel plot: loss, Dice per epoch, per-class Dice</li>
 <li><code>training_history.json</code> - Numerical results</li>
 </ul>
-
-<h2>Resource Optimization</h2>
-
-<p><strong>Storage Constraint Solution</strong> (10GB limit):</p>
-
-<ul>
-<li>Removed unnecessary packages: TensorFlow, Keras, scipy, scikit-image, opencv-python, pandas, nilearn</li>
-<li>Final dependencies: torch, torchvision, nibabel, numpy, matplotlib, tqdm (~2-3GB)</li>
-<li>Training: 1 epoch, batch size 1 → minimal memory, excellent quality</li>
-<li><strong>3D optimization</strong>: Downsampling (2x) reduces memory footprint by ~8x per volume</li>
-</ul>
-
-<h2>References</h2>
-
-<ol>
-<li>Ronneberger et al. (2015). U-Net: Convolutional Networks for Biomedical Image Segmentation. MICCAI.</li>
-<li>Dice, L. R. (1945). Measures of Ecologic Association Between Species. Ecology.</li>
-<li>Milletari et al. (2016). V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation. 3DV.</li>
-</ol>
 
 <hr />
 
