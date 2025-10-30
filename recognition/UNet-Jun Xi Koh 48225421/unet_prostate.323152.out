@@ -1,0 +1,302 @@
+Requirement already satisfied: torch==2.1.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from -r requirements.txt (line 1)) (2.1.0)
+Requirement already satisfied: torchvision==0.16.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from -r requirements.txt (line 2)) (0.16.0)
+Requirement already satisfied: nibabel==5.1.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from -r requirements.txt (line 3)) (5.1.0)
+Requirement already satisfied: numpy==1.24.3 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from -r requirements.txt (line 4)) (1.24.3)
+Requirement already satisfied: scipy==1.11.4 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from -r requirements.txt (line 5)) (1.11.4)
+Requirement already satisfied: matplotlib==3.8.2 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from -r requirements.txt (line 6)) (3.8.2)
+Requirement already satisfied: tqdm==4.66.1 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from -r requirements.txt (line 7)) (4.66.1)
+Requirement already satisfied: filelock in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (3.20.0)
+Requirement already satisfied: typing-extensions in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (4.15.0)
+Requirement already satisfied: sympy in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (1.14.0)
+Requirement already satisfied: networkx in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (3.5)
+Requirement already satisfied: jinja2 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (3.1.6)
+Requirement already satisfied: fsspec in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (2025.9.0)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.1.105 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.1.105 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.1.105 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: nvidia-cudnn-cu12==8.9.2.26 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (8.9.2.26)
+Requirement already satisfied: nvidia-cublas-cu12==12.1.3.1 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (12.1.3.1)
+Requirement already satisfied: nvidia-cufft-cu12==11.0.2.54 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (11.0.2.54)
+Requirement already satisfied: nvidia-curand-cu12==10.3.2.106 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (10.3.2.106)
+Requirement already satisfied: nvidia-cusolver-cu12==11.4.5.107 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (11.4.5.107)
+Requirement already satisfied: nvidia-cusparse-cu12==12.1.0.106 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (12.1.0.106)
+Requirement already satisfied: nvidia-nccl-cu12==2.18.1 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (2.18.1)
+Requirement already satisfied: nvidia-nvtx-cu12==12.1.105 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (12.1.105)
+Requirement already satisfied: triton==2.1.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (2.1.0)
+Requirement already satisfied: requests in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torchvision==0.16.0->-r requirements.txt (line 2)) (2.32.5)
+Requirement already satisfied: pillow!=8.3.*,>=5.3.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from torchvision==0.16.0->-r requirements.txt (line 2)) (12.0.0)
+Requirement already satisfied: packaging>=17 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from nibabel==5.1.0->-r requirements.txt (line 3)) (25.0)
+Requirement already satisfied: contourpy>=1.0.1 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from matplotlib==3.8.2->-r requirements.txt (line 6)) (1.3.2)
+Requirement already satisfied: cycler>=0.10 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from matplotlib==3.8.2->-r requirements.txt (line 6)) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from matplotlib==3.8.2->-r requirements.txt (line 6)) (4.60.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from matplotlib==3.8.2->-r requirements.txt (line 6)) (1.4.9)
+Requirement already satisfied: pyparsing>=2.3.1 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from matplotlib==3.8.2->-r requirements.txt (line 6)) (3.2.5)
+Requirement already satisfied: python-dateutil>=2.7 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from matplotlib==3.8.2->-r requirements.txt (line 6)) (2.9.0.post0)
+Requirement already satisfied: nvidia-nvjitlink-cu12 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from nvidia-cusolver-cu12==11.4.5.107->torch==2.1.0->-r requirements.txt (line 1)) (12.9.86)
+Requirement already satisfied: six>=1.5 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from python-dateutil>=2.7->matplotlib==3.8.2->-r requirements.txt (line 6)) (1.17.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from jinja2->torch==2.1.0->-r requirements.txt (line 1)) (3.0.3)
+Requirement already satisfied: charset_normalizer<4,>=2 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from requests->torchvision==0.16.0->-r requirements.txt (line 2)) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from requests->torchvision==0.16.0->-r requirements.txt (line 2)) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from requests->torchvision==0.16.0->-r requirements.txt (line 2)) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from requests->torchvision==0.16.0->-r requirements.txt (line 2)) (2025.10.5)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /home/Student/s4822542/miniconda3/envs/torch_py311/lib/python3.11/site-packages (from sympy->torch==2.1.0->-r requirements.txt (line 1)) (1.3.0)
+============================================================
+Improved UNet - HipMRI Study Segmentation (3D)
+============================================================
+
+Device: cuda
+GPU: NVIDIA A100-PCIE-40GB
+CUDA Version: 12.1
+
+Training Configuration:
+  Mode: 3D
+  Epochs: 50
+  Batch Size: 1
+  Early Stopping Patience: 5
+  Downsample Factor: 2
+✓ Using Rangpur 3D dataset:
+  Volumes: /home/groups/comp3710/HipMRI_Study_open/semantic_MRs
+  Labels: /home/groups/comp3710/HipMRI_Study_open/semantic_labels_only
+
+============================================================
+3D DATASET VALIDATION
+============================================================
+✓ Found volumes directory: /home/groups/comp3710/HipMRI_Study_open/semantic_MRs
+✓ Found labels directory: /home/groups/comp3710/HipMRI_Study_open/semantic_labels_only
+
+Scanning NIfTI files...
+✓ Found 211 volume files
+✓ Found 211 label files
+✓ Sample volume loads: (256, 256, 128), dtype: int32
+✓ Sample label loads: (256, 256, 128), dtype: int32
+
+✓ 3D Dataset validation PASSED
+
+============================================================
+TRAINING
+============================================================
+Using device: cuda
+
+Loading 3D dataset...
+Found 211 volumes and 211 labels
+Dataset split: Train=126, Val=42, Test=43
+
+Initializing 3D UNet model...
+
+Training 3D UNet...
+============================================================
+
+Epoch 1/50
+Train Loss: 0.196159
+Val Loss: 0.101134
+Val Dice - Avg: 0.9619, Class 0: 0.9911, Class 1: 0.9327
+✓ Saved best model to checkpoints_3d/best_model_epoch_1.pt
+
+Epoch 2/50
+Train Loss: 0.098207
+Val Loss: 0.078129
+Val Dice - Avg: 0.9611, Class 0: 0.9908, Class 1: 0.9314
+No improvement. Patience: 1/5
+
+Epoch 3/50
+Train Loss: 0.081091
+Val Loss: 0.063070
+Val Dice - Avg: 0.9634, Class 0: 0.9927, Class 1: 0.9341
+✓ Saved best model to checkpoints_3d/best_model_epoch_3.pt
+
+Epoch 4/50
+Train Loss: 0.074272
+Val Loss: 0.059571
+Val Dice - Avg: 0.9658, Class 0: 0.9943, Class 1: 0.9373
+✓ Saved best model to checkpoints_3d/best_model_epoch_4.pt
+
+Epoch 5/50
+Train Loss: 0.069852
+Val Loss: 0.060167
+Val Dice - Avg: 0.9642, Class 0: 0.9931, Class 1: 0.9354
+No improvement. Patience: 1/5
+
+Epoch 6/50
+Train Loss: 0.066210
+Val Loss: 0.058582
+Val Dice - Avg: 0.9644, Class 0: 0.9932, Class 1: 0.9356
+No improvement. Patience: 2/5
+
+Epoch 7/50
+Train Loss: 0.064258
+Val Loss: 0.058731
+Val Dice - Avg: 0.9645, Class 0: 0.9935, Class 1: 0.9355
+No improvement. Patience: 3/5
+
+Epoch 8/50
+Train Loss: 0.062526
+Val Loss: 0.056667
+Val Dice - Avg: 0.9662, Class 0: 0.9947, Class 1: 0.9377
+✓ Saved best model to checkpoints_3d/best_model_epoch_8.pt
+
+Epoch 9/50
+Train Loss: 0.063332
+Val Loss: 0.056058
+Val Dice - Avg: 0.9661, Class 0: 0.9946, Class 1: 0.9376
+No improvement. Patience: 1/5
+
+Epoch 10/50
+Train Loss: 0.064214
+Val Loss: 0.056066
+Val Dice - Avg: 0.9663, Class 0: 0.9947, Class 1: 0.9379
+✓ Saved best model to checkpoints_3d/best_model_epoch_10.pt
+
+Epoch 11/50
+Train Loss: 0.063099
+Val Loss: 0.057043
+Val Dice - Avg: 0.9652, Class 0: 0.9939, Class 1: 0.9365
+No improvement. Patience: 1/5
+
+Epoch 12/50
+Train Loss: 0.061673
+Val Loss: 0.055594
+Val Dice - Avg: 0.9663, Class 0: 0.9947, Class 1: 0.9378
+No improvement. Patience: 2/5
+
+Epoch 13/50
+Train Loss: 0.060306
+Val Loss: 0.057007
+Val Dice - Avg: 0.9651, Class 0: 0.9937, Class 1: 0.9364
+No improvement. Patience: 3/5
+
+Epoch 14/50
+Train Loss: 0.062344
+Val Loss: 0.055681
+Val Dice - Avg: 0.9661, Class 0: 0.9946, Class 1: 0.9376
+Epoch 00014: reducing learning rate of group 0 to 5.0000e-04.
+No improvement. Patience: 4/5
+
+Epoch 15/50
+Train Loss: 0.060614
+Val Loss: 0.055128
+Val Dice - Avg: 0.9666, Class 0: 0.9950, Class 1: 0.9382
+✓ Saved best model to checkpoints_3d/best_model_epoch_15.pt
+
+Epoch 16/50
+Train Loss: 0.058466
+Val Loss: 0.057523
+Val Dice - Avg: 0.9644, Class 0: 0.9932, Class 1: 0.9356
+No improvement. Patience: 1/5
+
+Epoch 17/50
+Train Loss: 0.059223
+Val Loss: 0.059073
+Val Dice - Avg: 0.9631, Class 0: 0.9922, Class 1: 0.9340
+No improvement. Patience: 2/5
+
+Epoch 18/50
+Train Loss: 0.058186
+Val Loss: 0.054835
+Val Dice - Avg: 0.9668, Class 0: 0.9952, Class 1: 0.9385
+✓ Saved best model to checkpoints_3d/best_model_epoch_18.pt
+
+Epoch 19/50
+Train Loss: 0.058027
+Val Loss: 0.054785
+Val Dice - Avg: 0.9669, Class 0: 0.9953, Class 1: 0.9385
+✓ Saved best model to checkpoints_3d/best_model_epoch_19.pt
+
+Epoch 20/50
+Train Loss: 0.059202
+Val Loss: 0.054594
+Val Dice - Avg: 0.9670, Class 0: 0.9953, Class 1: 0.9386
+✓ Saved best model to checkpoints_3d/best_model_epoch_20.pt
+
+Epoch 21/50
+Train Loss: 0.058119
+Val Loss: 0.055006
+Val Dice - Avg: 0.9667, Class 0: 0.9951, Class 1: 0.9382
+No improvement. Patience: 1/5
+
+Epoch 22/50
+Train Loss: 0.057387
+Val Loss: 0.054590
+Val Dice - Avg: 0.9670, Class 0: 0.9954, Class 1: 0.9386
+✓ Saved best model to checkpoints_3d/best_model_epoch_22.pt
+
+Epoch 23/50
+Train Loss: 0.057443
+Val Loss: 0.054720
+Val Dice - Avg: 0.9668, Class 0: 0.9952, Class 1: 0.9385
+No improvement. Patience: 1/5
+
+Epoch 24/50
+Train Loss: 0.058151
+Val Loss: 0.054739
+Val Dice - Avg: 0.9668, Class 0: 0.9952, Class 1: 0.9384
+No improvement. Patience: 2/5
+
+Epoch 25/50
+Train Loss: 0.057720
+Val Loss: 0.054551
+Val Dice - Avg: 0.9669, Class 0: 0.9953, Class 1: 0.9386
+No improvement. Patience: 3/5
+
+Epoch 26/50
+Train Loss: 0.056727
+Val Loss: 0.054290
+Val Dice - Avg: 0.9672, Class 0: 0.9955, Class 1: 0.9389
+✓ Saved best model to checkpoints_3d/best_model_epoch_26.pt
+
+Epoch 27/50
+Train Loss: 0.057148
+Val Loss: 0.054424
+Val Dice - Avg: 0.9671, Class 0: 0.9954, Class 1: 0.9387
+No improvement. Patience: 1/5
+
+Epoch 28/50
+Train Loss: 0.058416
+Val Loss: 0.054698
+Val Dice - Avg: 0.9669, Class 0: 0.9953, Class 1: 0.9385
+No improvement. Patience: 2/5
+
+Epoch 29/50
+Train Loss: 0.058260
+Val Loss: 0.054575
+Val Dice - Avg: 0.9669, Class 0: 0.9952, Class 1: 0.9386
+No improvement. Patience: 3/5
+
+Epoch 30/50
+Train Loss: 0.057854
+Val Loss: 0.054883
+Val Dice - Avg: 0.9665, Class 0: 0.9948, Class 1: 0.9382
+No improvement. Patience: 4/5
+
+Epoch 31/50
+Train Loss: 0.056645
+Val Loss: 0.056031
+Val Dice - Avg: 0.9656, Class 0: 0.9942, Class 1: 0.9371
+No improvement. Patience: 5/5
+Early stopping at epoch 31
+
+============================================================
+TESTING
+============================================================
+
+Test Dice - Avg: 0.9675, Class 0: 0.9961, Class 1: 0.9389
+
+Training history saved to checkpoints_3d/training_history_3d.json
+
+============================================================
+RESULTS
+============================================================
+Model: 3D
+Best epoch: 26
+Best validation Dice: 0.9672
+Test Dice scores:
+  class_0: 0.9961
+  class_1: 0.9389
+  avg: 0.9675
+
+✓ SUCCESS: Prostate Dice coefficient (0.9389) >= 0.75
+
+============================================================
+TRAINING COMPLETE
+============================================================
+Checkpoints saved to: checkpoints_3d
+Training history saved to: checkpoints_3d/training_history.json

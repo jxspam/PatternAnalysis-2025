@@ -181,7 +181,8 @@ pip install -r requirements.txt
 **Purpose**: Training loop with validation, early stopping, and checkpointing
 
 **Workflow**:
-Have 
+Have
+
 ```
 1. Parse arguments (--mode, --data_dir, --epochs, --batch_size, etc.)
 2. Load data via create_data_loaders()
@@ -385,8 +386,8 @@ python train.py \
 |              | - predict_single_image(): 2D inference                                                                      |
 |              | - predict_single_volume(): 3D inference with downsampling                                                   |
 |              | - evaluate_predictions(): Compute Dice scores (auto-selects 2D or 3D function)                              |
-| `test.py`    | **Flexible automated test suite** supporting 2D and 3D training:                                              |
-|              | - Default: 3D training with 50 epochs (fully configured for convergence)                                     |
+| `test.py`    | **Flexible automated test suite** supporting 2D and 3D training:                                            |
+|              | - Default: 3D training with 50 epochs (fully configured for convergence)                                    |
 |              | - Args: --mode {2d/3d}, --epochs, --batch_size, --downsample_factor, --early_stop_patience                  |
 |              | - Auto-detects data paths (Rangpur or local)                                                                |
 |              | - Saves to checkpoints/ (2D) or checkpoints_3d/ (3D)                                                        |
@@ -442,12 +443,14 @@ python predict.py --mode 3d --checkpoint ./checkpoints_3d/best_model.pt --volume
 **Status**: ✓✓✓ All metrics far exceed ≥0.7 target. **Prostate segmentation Dice: 93.89%** | Background: 99.61%
 
 **Clinical Significance**:
+
 - **96.75% average Dice coefficient** indicates excellent volumetric segmentation quality
 - **99.61% background accuracy** demonstrates minimal false positives in healthy tissue
 - **93.89% prostate accuracy** achieves robust tumor/tissue boundary detection
 - Early stopping at epoch 26 (out of 50) indicates optimal convergence without overfitting
 
 **Training Progression**:
+
 - Convergence achieved across 26 epochs with downsampled 3D volumes
 - Early stopping patience=5 prevented overfitting while allowing full convergence
 - Consistent improvement in validation Dice from epoch 1 to epoch 26
@@ -466,14 +469,16 @@ python predict.py --mode 3d --checkpoint ./checkpoints_3d/best_model.pt --volume
 #### Visualizations
 
 **Training Curves** - 4-panel training metrics visualization:
+
 - Panel 1: Total loss (training vs validation) - shows smooth convergence to epoch 26
 - Panel 2: Validation Dice per epoch - demonstrates 96%+ sustained performance
-- Panel 3: Per-class validation Dice - both classes improve consistently  
+- Panel 3: Per-class validation Dice - both classes improve consistently
 - Panel 4: Test Dice by class - final metrics at epoch 26 (99.61% background, 93.89% prostate)
 
 ![Training Curves 3D](results/training_curves_3d.png)
 
 **Test Predictions** - 5 batch visualizations showing actual vs predicted vs ground-truth segmentations:
+
 - Demonstrates model ability to handle diverse MRI volumes with accurate prostate boundary detection
 - Overlays show model's confidence in contour placement with minimal false positives/negatives
 
@@ -512,7 +517,7 @@ python predict.py --mode 3d --checkpoint ./checkpoints_3d/best_model.pt --volume
 
 - `training_curves_3d.png` - 4-panel training visualization:
   - Loss curves (training vs validation)
-  - Validation Dice per epoch  
+  - Validation Dice per epoch
   - Per-class validation Dice over training
   - Final test metrics by class
 - `test_predictions_batch_01.png` through `test_predictions_batch_05.png` - Batch prediction visualizations showing:

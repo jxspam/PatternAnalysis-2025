@@ -449,7 +449,7 @@ Output Conv3D 32→2 → (2, D, H, W)
 <p><strong>Purpose</strong>: Training loop with validation, early stopping, and checkpointing</p>
 
 <p><strong>Workflow</strong>:
-Have </p>
+Have</p>
 
 <pre><code>1. Parse arguments (--mode, --data_dir, --epochs, --batch_size, etc.)
 2. Load data via create_data_loaders()
@@ -828,17 +828,23 @@ python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span clas
 
 <p><strong>Status</strong>: ✓✓✓ All metrics far exceed ≥0.7 target. <strong>Prostate segmentation Dice: 93.89%</strong> | Background: 99.61%</p>
 
-<p><strong>Clinical Significance</strong>:
-- <strong>96.75% average Dice coefficient</strong> indicates excellent volumetric segmentation quality
-- <strong>99.61% background accuracy</strong> demonstrates minimal false positives in healthy tissue
-- <strong>93.89% prostate accuracy</strong> achieves robust tumor/tissue boundary detection
-- Early stopping at epoch 26 (out of 50) indicates optimal convergence without overfitting</p>
+<p><strong>Clinical Significance</strong>:</p>
 
-<p><strong>Training Progression</strong>:
-- Convergence achieved across 26 epochs with downsampled 3D volumes
-- Early stopping patience=5 prevented overfitting while allowing full convergence
-- Consistent improvement in validation Dice from epoch 1 to epoch 26
-- Stable loss after convergence indicates robust model</p>
+<ul>
+<li><strong>96.75% average Dice coefficient</strong> indicates excellent volumetric segmentation quality</li>
+<li><strong>99.61% background accuracy</strong> demonstrates minimal false positives in healthy tissue</li>
+<li><strong>93.89% prostate accuracy</strong> achieves robust tumor/tissue boundary detection</li>
+<li>Early stopping at epoch 26 (out of 50) indicates optimal convergence without overfitting</li>
+</ul>
+
+<p><strong>Training Progression</strong>:</p>
+
+<ul>
+<li>Convergence achieved across 26 epochs with downsampled 3D volumes</li>
+<li>Early stopping patience=5 prevented overfitting while allowing full convergence</li>
+<li>Consistent improvement in validation Dice from epoch 1 to epoch 26</li>
+<li>Stable loss after convergence indicates robust model</li>
+</ul>
 
 <p><strong>3D-specific Implementation Details</strong>:</p>
 
@@ -854,17 +860,23 @@ python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span clas
 
 <h4>Visualizations</h4>
 
-<p><strong>Training Curves</strong> - 4-panel training metrics visualization:
-- Panel 1: Total loss (training vs validation) - shows smooth convergence to epoch 26
-- Panel 2: Validation Dice per epoch - demonstrates 96%+ sustained performance
-- Panel 3: Per-class validation Dice - both classes improve consistently<br />
-- Panel 4: Test Dice by class - final metrics at epoch 26 (99.61% background, 93.89% prostate)</p>
+<p><strong>Training Curves</strong> - 4-panel training metrics visualization:</p>
+
+<ul>
+<li>Panel 1: Total loss (training vs validation) - shows smooth convergence to epoch 26</li>
+<li>Panel 2: Validation Dice per epoch - demonstrates 96%+ sustained performance</li>
+<li>Panel 3: Per-class validation Dice - both classes improve consistently</li>
+<li>Panel 4: Test Dice by class - final metrics at epoch 26 (99.61% background, 93.89% prostate)</li>
+</ul>
 
 <p><img src="results/training_curves_3d.png" alt="Training Curves 3D" /></p>
 
-<p><strong>Test Predictions</strong> - 5 batch visualizations showing actual vs predicted vs ground-truth segmentations:
-- Demonstrates model ability to handle diverse MRI volumes with accurate prostate boundary detection
-- Overlays show model's confidence in contour placement with minimal false positives/negatives</p>
+<p><strong>Test Predictions</strong> - 5 batch visualizations showing actual vs predicted vs ground-truth segmentations:</p>
+
+<ul>
+<li>Demonstrates model ability to handle diverse MRI volumes with accurate prostate boundary detection</li>
+<li>Overlays show model's confidence in contour placement with minimal false positives/negatives</li>
+</ul>
 
 <p><img src="results/test_predictions_batch_01.png" alt="Test Predictions Batch 1" /></p>
 
@@ -926,7 +938,7 @@ python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span clas
 <li><code>training_curves_3d.png</code> - 4-panel training visualization:
 <ul>
 <li>Loss curves (training vs validation)</li>
-<li>Validation Dice per epoch  </li>
+<li>Validation Dice per epoch</li>
 <li>Per-class validation Dice over training</li>
 <li>Final test metrics by class</li>
 </ul></li>

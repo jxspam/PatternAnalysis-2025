@@ -13,6 +13,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from matplotlib.lines import Line2D
 from pathlib import Path
 import json
 from scipy.ndimage import zoom
@@ -76,7 +77,7 @@ def plot_training_curves(history_path, output_dir='./results', save_name='traini
     axes[1].set_title('Validation Dice Coefficient Across Epochs', fontsize=13, fontweight='bold')
     axes[1].legend(fontsize=11)
     axes[1].grid(True, alpha=0.3)
-    axes[1].set_ylim([0, 1.05])
+    axes[1].set_ylim([0.9, 1.0])  # Expanded scale 0.9-1.0 for better detail
     axes[1].set_xticks(range(1, len(epochs) + 1, max(1, len(epochs) // 10)))
     axes[1].axhline(y=0.7, color='orange', linestyle=':', linewidth=1.5, alpha=0.7, label='Threshold (0.7)')
     
@@ -181,13 +182,22 @@ def visualize_3d_predictions_grid_10_per_image(model, test_loader, device, num_b
             
             # Display input in grayscale
             ax.imshow(input_img, cmap='gray', alpha=0.7)
-            # Overlay predicted prostate in red
-            ax.imshow(np.ma.masked_where(pred_mask == 0, pred_mask), cmap='Reds', alpha=0.5, label='Predicted')
-            # Overlay GT prostate in blue contour
-            ax.contour(gt_mask, levels=[0.5], colors='blue', linewidths=2, label='Ground Truth')
+            
+            # Overlay predicted prostate as red contour (solid line)
+            ax.contour(pred_mask, levels=[0.5], colors='red', linewidths=2.5, linestyles='solid')
+            # Overlay GT prostate as blue contour (dashed line) - visible even when overlapping
+            ax.contour(gt_mask, levels=[0.5], colors='blue', linewidths=2.5, linestyles='dashed')
             
             ax.set_title(f'Sample {sample_idx + 1}', fontsize=10, fontweight='bold')
             ax.axis('off')
+            
+            # Add legend only to first subplot
+            if local_idx == 0:
+                legend_elements = [
+                    Line2D([0], [0], color='red', linewidth=2.5, linestyle='solid', label='Predicted'),
+                    Line2D([0], [0], color='blue', linewidth=2.5, linestyle='dashed', label='Ground Truth')
+                ]
+                ax.legend(handles=legend_elements, loc='upper left', fontsize=8)
         
         # Hide unused subplots
         for local_idx in range(num_samples_in_image, rows * cols):
@@ -296,19 +306,21 @@ def visualize_3d_detailed_comparison(model, test_loader, device, num_samples=10,
                     # Overlay: prediction on input
                     ax = plt.subplot(num_slices_to_show, num_views, col * num_views + 4)
                     ax.imshow(volume[slice_idx], cmap='gray')
-                    ax.imshow(np.ma.masked_where(prediction[slice_idx] == 0, prediction[slice_idx]),
-                             cmap='Reds', alpha=0.5)
+                    # Use contour for predicted prostate (red solid line)
+                    pred_mask_slice = (prediction[slice_idx] == 1).astype(float)
+                    ax.contour(pred_mask_slice, levels=[0.5], colors='red', linewidths=2, linestyles='solid')
                     if col == 0:
-                        ax.set_title('Pred Overlay', fontweight='bold')
+                        ax.set_title('Pred Contour', fontweight='bold')
                     ax.axis('off')
                     
                     # Overlay: ground truth on input
                     ax = plt.subplot(num_slices_to_show, num_views, col * num_views + 5)
                     ax.imshow(volume[slice_idx], cmap='gray')
-                    ax.imshow(np.ma.masked_where(ground_truth[slice_idx] == 0, ground_truth[slice_idx]),
-                             cmap='Blues', alpha=0.5)
+                    # Use contour for GT prostate (blue dashed line)
+                    gt_mask_slice = (ground_truth[slice_idx] == 1).astype(float)
+                    ax.contour(gt_mask_slice, levels=[0.5], colors='blue', linewidths=2, linestyles='dashed')
                     if col == 0:
-                        ax.set_title('GT Overlay', fontweight='bold')
+                        ax.set_title('GT Contour', fontweight='bold')
                     ax.axis('off')
                     
                     col += 1
