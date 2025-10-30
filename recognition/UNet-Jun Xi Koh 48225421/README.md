@@ -59,6 +59,26 @@ The **Improved UNet** is an encoder-decoder convolutional neural network designe
      - Without weighting: Model learns to ignore prostate (24% Dice)
      - With weights [0.25, 1.75]: Model focuses on minority class (93% Dice) → **388% improvement**
 
+   **Weight Design Rationale**:
+   
+   The class weights `[0.25, 1.75]` are specifically calibrated to handle the 7× class imbalance:
+   
+   | Class | Frequency | Weight | Loss Formula | Contribution |
+   | --- | --- | --- | --- | --- |
+   | **Class 0 (Background)** | 87.5% (frequent) | **0.25** | $(1 - \text{Dice}_0) \times 0.25$ | 25% |
+   | **Class 1 (Prostate)** | 12.5% (rare) | **1.75** | $(1 - \text{Dice}_1) \times 1.75$ | 175% |
+   
+   **Why this specific ratio?**
+   - **Inverse class frequency weighting**: Weight inversely proportional to class prevalence
+   - **Ratio match**: $\frac{1.75}{0.25} = 7.0$ (exactly matches the 7× class imbalance)
+   - **Normalized sum**: $0.25 + 1.75 = 2.0$ (average weight = 1.0, maintains interpretability)
+   - **Clinical justification**: Prostate errors have higher clinical consequence → higher penalty
+   
+   **Total Weighted Loss**:
+   $$\text{Loss} = \frac{1}{2}[(1 - \text{Dice}_0) \times 0.25 + (1 - \text{Dice}_1) \times 1.75]$$
+   
+   Even though prostate Dice is 93%, its weighted loss dominates (1.75× multiplier), ensuring the model continuously improves prostate boundary detection rather than settling for background accuracy alone.
+
 #### 2D Architecture:
 
 ```
