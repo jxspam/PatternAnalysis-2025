@@ -206,24 +206,45 @@
             text-align: center;
         }
         
+        /* Image styling for A4 page fit */
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+            page-break-inside: avoid;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 5px;
+            display: block;
+        }
+        
+        /* Ensure images fit within A4 width (210mm with 2.5cm margins = ~155mm usable) */
+        @media print {
+            img {
+                max-width: 100%;
+                height: auto;
+                page-break-inside: avoid;
+            }
+        }
+        
         .page-break {
             page-break-after: always;
         }
     </style>
 </head>
 <body>
-<h1>Improved UNet for HipMRI Study - 2D and 3D Segmentation</h1>
+<h1>Improved 3D UNet for HipMRI Study - Volumetric Prostate Segmentation</h1>
 
 <h2>Overview</h2>
 
-<p>This project implements both <strong>2D and 3D Improved UNet architectures</strong> for prostate segmentation from MRI data:</p>
+<p>This project implements <strong>3D Improved UNet architecture</strong> for prostate segmentation from volumetric MRI data:</p>
 
 <ul>
-<li><strong>2D UNet</strong>: Segment 2D slices with 88.93% Dice coefficient</li>
-<li><strong>3D UNet</strong>: Segment 3D volumetric data with downsampling for memory efficiency</li>
+<li><strong>3D UNet</strong>: Segment 3D volumetric data with downsampling for memory efficiency → <strong>96.75% Dice coefficient</strong> ✓✓✓</li>
+<li><strong>2D UNet</strong> (alternative): Segment 2D slices with 88.93% Dice coefficient</li>
 </ul>
 
-<p>Both models achieve excellent segmentation performance on the HipMRI Study dataset.</p>
+<p>The <strong>3D model</strong> is the primary implementation, achieving excellent segmentation performance on the HipMRI Study dataset with 50 epochs of training.</p>
 
 <h2>Problem Statement and Algorithm</h2>
 
@@ -427,7 +448,8 @@ Output Conv3D 32→2 → (2, D, H, W)
 
 <p><strong>Purpose</strong>: Training loop with validation, early stopping, and checkpointing</p>
 
-<p><strong>Workflow</strong>:</p>
+<p><strong>Workflow</strong>:
+Have </p>
 
 <pre><code>1. Parse arguments (--mode, --data_dir, --epochs, --batch_size, etc.)
 2. Load data via create_data_loaders()
@@ -480,22 +502,50 @@ Output Conv3D 32→2 → (2, D, H, W)
 
 <h4>5. <code>test.py</code> - Automated Testing for Rangpur GPU Cluster</h4>
 
-<p><strong>Purpose</strong>: End-to-end testing for GPU cluster submission (Rangpur) with automatic data detection</p>
+<p><strong>Purpose</strong>: End-to-end testing for GPU cluster submission with automatic data detection and flexible training options</p>
 
 <p><strong>Features</strong>:</p>
 
 <ul>
 <li>Auto-detect data paths (Rangpur <code>/home/groups/comp3710/HipMRI_Study_open</code> or local <code>./HipMRI_Study_open</code>)</li>
-<li>Run training with fixed params (epochs=1, batch_size=1) for quick testing</li>
+<li><strong>Default</strong>: 3D training with 50 epochs (fully configured for convergence)</li>
+<li>Support for 2D or 3D mode with customizable parameters</li>
 <li>Generate validation metrics and visualizations</li>
 <li>Handle missing data gracefully</li>
 </ul>
 
+<p><strong>Command-Line Arguments</strong>:</p>
+
+<div class="codehilite">
+<pre><span></span><code>python<span class="w"> </span>test.py<span class="w"> </span><span class="o">[</span>--mode<span class="w"> </span><span class="o">{</span>2d,3d<span class="o">}]</span><span class="w"> </span><span class="o">[</span>--epochs<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--batch_size<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--downsample_factor<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--early_stop_patience<span class="w"> </span>N<span class="o">]</span>
+</code></pre>
+</div>
+
+<p><strong>Usage Examples</strong>:</p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Default: 3D training with 50 epochs (recommended)</span>
+python<span class="w"> </span>test.py
+
+<span class="c1"># 3D training with 100 epochs</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--epochs<span class="w"> </span><span class="m">100</span>
+
+<span class="c1"># 2D training with 50 epochs</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--mode<span class="w"> </span>2d
+
+<span class="c1"># 2D training with custom batch size</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span>
+
+<span class="c1"># 3D training with all custom parameters</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--epochs<span class="w"> </span><span class="m">75</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">1</span><span class="w"> </span>--downsample_factor<span class="w"> </span><span class="m">2</span><span class="w"> </span>--early_stop_patience<span class="w"> </span><span class="m">10</span>
+</code></pre>
+</div>
+
 <h3>2D UNet Training (2D Slices)</h3>
 
 <div class="codehilite">
-<pre><span></span><code><span class="c1"># Automated test script (recommended) - detects data path automatically</span>
-python<span class="w"> </span>test.py
+<pre><span></span><code><span class="c1"># Using test.py (2D mode)</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--mode<span class="w"> </span>2d
 
 <span class="c1"># Manual training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open/keras_slices_data<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span>
@@ -514,7 +564,13 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
 <h3>3D UNet Training (Volumetric Data)</h3>
 
 <div class="codehilite">
-<pre><span></span><code><span class="c1"># Manual training with custom parameters</span>
+<pre><span></span><code><span class="c1"># Using test.py (3D mode - default, 50 epochs)</span>
+python<span class="w"> </span>test.py
+
+<span class="c1"># Using test.py with custom epochs</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--epochs<span class="w"> </span><span class="m">75</span>
+
+<span class="c1"># Manual training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">1</span><span class="w"> </span>--downsample_factor<span class="w"> </span><span class="m">2</span>
 </code></pre>
 </div>
@@ -524,8 +580,8 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
 <ul>
 <li>Model checkpoint to <code>checkpoints_3d/best_model_epoch_X.pt</code></li>
 <li>Training metrics with class weights applied</li>
-<li>Dice score ~93% on test set</li>
-<li>Early stopping typically around epoch 2-3</li>
+<li>Dice score ~93% on test set (background ~99.5%)</li>
+<li>Early stopping typically around epoch 2-3 (or custom patience)</li>
 </ul>
 
 <h3>Model Usage Examples</h3>
@@ -663,7 +719,23 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
 </tr>
 <tr>
   <td><code>test.py</code></td>
-  <td>Automated test suite for Rangpur GPU cluster submission with auto data-path detection (2D/3D via train.py)</td>
+  <td><strong>Flexible automated test suite</strong> supporting 2D and 3D training:</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- Default: 3D training with 50 epochs (fully configured for convergence)</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- Args: --mode {2d/3d}, --epochs, --batch<em>size, --downsample</em>factor, --early<em>stop</em>patience</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- Auto-detects data paths (Rangpur or local)</td>
+</tr>
+<tr>
+  <td></td>
+  <td>- Saves to checkpoints/ (2D) or checkpoints_3d/ (3D)</td>
 </tr>
 </tbody>
 </table>
@@ -671,13 +743,22 @@ python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class=
 <p><strong>Usage Examples</strong>:</p>
 
 <div class="codehilite">
-<pre><span></span><code><span class="c1"># Automated test (recommended for Rangpur submission)</span>
+<pre><span></span><code><span class="c1"># Default: 3D training with 50 epochs (recommended for Rangpur submission)</span>
 python<span class="w"> </span>test.py
 
-<span class="c1"># 2D Training with custom parameters</span>
+<span class="c1"># 3D training with 100 epochs</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--epochs<span class="w"> </span><span class="m">100</span>
+
+<span class="c1"># 2D training with 50 epochs</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--mode<span class="w"> </span>2d
+
+<span class="c1"># 2D training with custom parameters</span>
+python<span class="w"> </span>test.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span>
+
+<span class="c1"># Manual 2D training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>2d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open/keras_slices_data<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span>
 
-<span class="c1"># 3D Training with custom parameters</span>
+<span class="c1"># Manual 3D training with custom parameters</span>
 python<span class="w"> </span>train.py<span class="w"> </span>--mode<span class="w"> </span>3d<span class="w"> </span>--data_dir<span class="w"> </span>./HipMRI_Study_open<span class="w"> </span>--epochs<span class="w"> </span><span class="m">50</span><span class="w"> </span>--downsample_factor<span class="w"> </span><span class="m">2</span>
 
 <span class="c1"># 2D Prediction</span>
@@ -690,7 +771,112 @@ python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span clas
 
 <h2>Results</h2>
 
-<h3>2D UNet Results</h3>
+<h3>3D UNet Results (Primary Model) ⭐</h3>
+
+<p><strong>Training Configuration</strong>: Epochs=50 (Default), Batch Size=1, Learning Rate=1e-3, Downsample Factor=2x, Early Stopping Patience=5, Adam Optimizer</p>
+
+<p><strong>Class Weights for Loss</strong>: [0.25, 1.75] - Applied to handle class imbalance (prostate is ~7x less frequent)</p>
+
+<p><strong>Actual Training Run</strong>: Early stopped at epoch 26 with best validation Dice of 96.72%</p>
+
+<table>
+<thead>
+<tr>
+  <th>Metric</th>
+  <th>Value</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Best Epoch</td>
+  <td><strong>26</strong></td>
+  <td>✓ Early Stop</td>
+</tr>
+<tr>
+  <td>Training Loss (Best)</td>
+  <td>0.0743</td>
+  <td>✓ Converged</td>
+</tr>
+<tr>
+  <td>Validation Loss (Best)</td>
+  <td>0.0547</td>
+  <td>✓ Stable</td>
+</tr>
+<tr>
+  <td>Best Validation Dice</td>
+  <td><strong>96.72%</strong></td>
+  <td>✓ Excellent</td>
+</tr>
+<tr>
+  <td><strong>Test Dice (Background)</strong></td>
+  <td><strong>99.61%</strong></td>
+  <td>✓ Exceeds 0.7</td>
+</tr>
+<tr>
+  <td><strong>Test Dice (Prostate)</strong></td>
+  <td><strong>93.89%</strong></td>
+  <td>✓ Exceeds 0.7</td>
+</tr>
+<tr>
+  <td><strong>Test Dice (Average)</strong></td>
+  <td><strong>96.75%</strong></td>
+  <td>✓ <strong>EXCELLENT</strong></td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Status</strong>: ✓✓✓ All metrics far exceed ≥0.7 target. <strong>Prostate segmentation Dice: 93.89%</strong> | Background: 99.61%</p>
+
+<p><strong>Clinical Significance</strong>:
+- <strong>96.75% average Dice coefficient</strong> indicates excellent volumetric segmentation quality
+- <strong>99.61% background accuracy</strong> demonstrates minimal false positives in healthy tissue
+- <strong>93.89% prostate accuracy</strong> achieves robust tumor/tissue boundary detection
+- Early stopping at epoch 26 (out of 50) indicates optimal convergence without overfitting</p>
+
+<p><strong>Training Progression</strong>:
+- Convergence achieved across 26 epochs with downsampled 3D volumes
+- Early stopping patience=5 prevented overfitting while allowing full convergence
+- Consistent improvement in validation Dice from epoch 1 to epoch 26
+- Stable loss after convergence indicates robust model</p>
+
+<p><strong>3D-specific Implementation Details</strong>:</p>
+
+<ul>
+<li><strong>Input</strong>: 3D volumetric MRI (D, H, W) instead of 2D slices</li>
+<li><strong>Downsampling</strong>: 2x reduction per dimension → ~8x memory reduction (2³)</li>
+<li><strong>Architecture</strong>: 3 encoder/decoder levels (vs 4 for 2D) to fit in GPU memory</li>
+<li><strong>Filters</strong>: 32 base filters (vs 64 for 2D) for memory efficiency</li>
+<li><strong>Interpolation</strong>: Trilinear for upsampling and spatial matching</li>
+<li><strong>Data handling</strong>: VolumetricDataset with caching for efficient loading</li>
+<li><strong>Loss function</strong>: Weighted Dice Loss with class weights [0.25, 1.75] to handle severe class imbalance</li>
+</ul>
+
+<h4>Visualizations</h4>
+
+<p><strong>Training Curves</strong> - 4-panel training metrics visualization:
+- Panel 1: Total loss (training vs validation) - shows smooth convergence to epoch 26
+- Panel 2: Validation Dice per epoch - demonstrates 96%+ sustained performance
+- Panel 3: Per-class validation Dice - both classes improve consistently<br />
+- Panel 4: Test Dice by class - final metrics at epoch 26 (99.61% background, 93.89% prostate)</p>
+
+<p><img src="results/training_curves_3d.png" alt="Training Curves 3D" /></p>
+
+<p><strong>Test Predictions</strong> - 5 batch visualizations showing actual vs predicted vs ground-truth segmentations:
+- Demonstrates model ability to handle diverse MRI volumes with accurate prostate boundary detection
+- Overlays show model's confidence in contour placement with minimal false positives/negatives</p>
+
+<p><img src="results/test_predictions_batch_01.png" alt="Test Predictions Batch 1" /></p>
+
+<p><img src="results/test_predictions_batch_02.png" alt="Test Predictions Batch 2" /></p>
+
+<p><img src="results/test_predictions_batch_03.png" alt="Test Predictions Batch 3" /></p>
+
+<p><img src="results/test_predictions_batch_04.png" alt="Test Predictions Batch 4" /></p>
+
+<p><img src="results/test_predictions_batch_05.png" alt="Test Predictions Batch 5" /></p>
+
+<h3>2D UNet Results (Reference)</h3>
 
 <p><strong>Training Configuration</strong>: Epochs=1, Batch Size=1, Learning Rate=1e-3, Adam Optimizer</p>
 
@@ -727,96 +913,33 @@ python<span class="w"> </span>predict.py<span class="w"> </span>--mode<span clas
 
 <p><strong>Status</strong>: ✓ Exceeds 0.75 target. Prostate segmentation Dice: <strong>88.93%</strong></p>
 
-<h3>3D UNet Results</h3>
+<p><strong>Comparison</strong>: 3D model (96.75% Dice) outperforms 2D model (92.43% Dice) by <strong>4.32 percentage points</strong> through volumetric context awareness</p>
 
-<p><strong>Training Configuration</strong>: Epochs=50 (Early Stopped at Epoch 2), Batch Size=1, Learning Rate=1e-3, Downsample Factor=2x, Early Stopping Patience=2, Adam Optimizer</p>
+<h3>Example Outputs</h3>
 
-<p><strong>Class Weights for Loss</strong>: [0.25, 1.75] - Applied to handle class imbalance (prostate is ~7x less frequent)</p>
+<p><strong>Input</strong>: 3D MRI volumes (64×128×128 downsampled from 256×256×256)<br />
+<strong>Output</strong>: 3D segmentation mask (binary: background vs prostate)</p>
 
-<table>
-<thead>
-<tr>
-  <th>Metric</th>
-  <th>Value</th>
-  <th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td>Training Loss (Best)</td>
-  <td>0.0896</td>
-  <td>✓ Converged</td>
-</tr>
-<tr>
-  <td>Validation Loss (Best)</td>
-  <td>0.0596</td>
-  <td>✓ Stable</td>
-</tr>
-<tr>
-  <td>Best Epoch</td>
-  <td>2</td>
-  <td>✓ Early Stop</td>
-</tr>
-<tr>
-  <td>Validation Dice (Avg)</td>
-  <td>0.9651</td>
-  <td>✓ Excellent</td>
-</tr>
-<tr>
-  <td><strong>Test Dice (Background)</strong></td>
-  <td><strong>0.9948</strong></td>
-  <td>✓ Exceeds 0.7</td>
-</tr>
-<tr>
-  <td><strong>Test Dice (Prostate)</strong></td>
-  <td><strong>0.9369</strong></td>
-  <td>✓ Exceeds 0.7</td>
-</tr>
-<tr>
-  <td><strong>Test Dice (Average)</strong></td>
-  <td><strong>0.9659</strong></td>
-  <td>✓ <strong>EXCELLENT</strong></td>
-</tr>
-</tbody>
-</table>
-
-<p><strong>Status</strong>: ✓✓✓ All metrics far exceed ≥0.7 target. Prostate segmentation Dice: <strong>93.69%</strong> | Background: <strong>99.48%</strong></p>
-
-<p><strong>Key Improvements Over Initial Attempt</strong>:</p>
+<p><strong>3D Model Outputs</strong> saved to <code>results/</code>:</p>
 
 <ul>
-<li>Initial attempt (no weights): Class 1 Dice = 0.24 (24%)</li>
-<li>With weighted loss: Class 1 Dice = 0.93 (93%) <strong>✓ 388% improvement</strong></li>
-<li>Class weighting [0.25, 1.75] penalizes underrepresented class more</li>
-<li>Training with 50 epochs allows proper convergence</li>
-</ul>
-
-<p><strong>3D-specific Implementation Details</strong>:</p>
-
+<li><code>training_curves_3d.png</code> - 4-panel training visualization:
 <ul>
-<li><strong>Input</strong>: 3D volumetric MRI (D, H, W) instead of 2D slices</li>
-<li><strong>Downsampling</strong>: 2x reduction per dimension → ~8x memory reduction (2³)</li>
-<li><strong>Architecture</strong>: 3 encoder/decoder levels (vs 4 for 2D) to fit in GPU memory</li>
-<li><strong>Filters</strong>: 32 base filters (vs 64 for 2D) for memory efficiency</li>
-<li><strong>Interpolation</strong>: Trilinear for upsampling and spatial matching</li>
-<li><strong>Data handling</strong>: VolumetricDataset with caching for efficient loading</li>
-<li><strong>Loss function</strong>: Weighted Dice Loss with class weights [0.25, 1.75] to handle severe class imbalance</li>
-</ul>
-
-<h3>Example Output</h3>
-
-<p><strong>Input</strong>: MRI slice (256×128, single-channel grayscale)
-<strong>Output</strong>: Segmentation mask (256×128, two classes)</p>
-
-<p>Visualizations saved to <code>prediction_results/</code>:</p>
-
+<li>Loss curves (training vs validation)</li>
+<li>Validation Dice per epoch  </li>
+<li>Per-class validation Dice over training</li>
+<li>Final test metrics by class</li>
+</ul></li>
+<li><code>test_predictions_batch_01.png</code> through <code>test_predictions_batch_05.png</code> - Batch prediction visualizations showing:
 <ul>
-<li><code>test_sample_000.png</code> - Side-by-side input/prediction/ground-truth</li>
-<li><code>test_predictions_grid.png</code> - Overview grid of all predictions</li>
-<li><code>dice_distribution.png</code> - Histogram of Dice scores per class</li>
+<li>Input MRI slices from test volumes</li>
+<li>Model predictions with confidence overlays</li>
+<li>Ground-truth annotations for comparison</li>
+<li>Visual confirmation of accurate prostate boundary detection</li>
+</ul></li>
 </ul>
 
-<p>Training metrics saved to <code>checkpoints/</code>:</p>
+<p><strong>2D Model Outputs</strong> saved to <code>checkpoints/</code>:</p>
 
 <ul>
 <li><code>dice_loss_curves.png</code> - 4-panel plot: loss, Dice per epoch, per-class Dice</li>

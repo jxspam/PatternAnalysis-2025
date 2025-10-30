@@ -274,6 +274,27 @@ def convert_md_to_html_markdown2(md_file, html_file):
             text-align: center;
         }}
         
+        /* Image styling for A4 page fit */
+        img {{
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+            page-break-inside: avoid;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 5px;
+            display: block;
+        }}
+        
+        /* Ensure images fit within A4 width (210mm with 2.5cm margins = ~155mm usable) */
+        @media print {{
+            img {{
+                max-width: 100%;
+                height: auto;
+                page-break-inside: avoid;
+            }}
+        }}
+        
         .page-break {{
             page-break-after: always;
         }}

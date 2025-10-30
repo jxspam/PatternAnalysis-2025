@@ -404,7 +404,7 @@ def generate_all_3d_visualizations(checkpoint_dir, data_dir, device=None,
     print(f"  - test_predictions_batch_*.png: Test samples (10 per image)")
     print(f"  - predictions_detailed/sample_*.png: Detailed multi-slice analysis")
     
-    return output_dir
+    return results_dir
 
 
 if __name__ == '__main__':
